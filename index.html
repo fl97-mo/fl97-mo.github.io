@@ -1,17 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>fl97-mo</title>
-      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-      <script type="module" crossorigin src="/assets/index-DeLoKUzX.js"></script>
-      <link rel="stylesheet" crossorigin href="/assets/index-CxAStyl4.css">
-    </head>
+    <title>fl97-mo</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <body>
-      <div id="root"></div>
-    </body>
-  </html>
-  
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #050805;
+        color: #00ff41;
+        min-height: 100%;
+      }
+      #root {
+        visibility: hidden;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-DiLki9wS.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B8aZ0f4B.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const root = document.getElementById("root");
+        if (root) root.style.visibility = "visible";
+      });
+    </script>
+
+  </body>
+</html>
