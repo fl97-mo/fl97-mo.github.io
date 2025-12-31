@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Dark background circle -->
+  <circle cx="32" cy="32" r="32" fill="#0a0a0a"/>
+  
+  <!-- Terminal green glow effect (outer) -->
+  <circle cx="32" cy="32" r="28" fill="none" stroke="#00ff00" stroke-width="0.5" opacity="0.3"/>
+  
+  <!-- Terminal green border -->
+  <circle cx="32" cy="32" r="28" fill="none" stroke="#00ff00" stroke-width="1.5"/>
+  
+  <!-- Terminal prompt text ">_" -->
+  <text x="32" y="40" 
+        font-family="monospace" 
+        font-size="28" 
+        font-weight="bold"
+        fill="#00ff00" 
+        text-anchor="middle"
+        style="text-shadow: 0 0 8px #00ff00, 0 0 4px #00ff00;">
+    &gt;_
+  </text>
+</svg>
