@@ -1,0 +1,1 @@
+export { AstronautLogoLab } from "./lab/AstronautLogoLab";
