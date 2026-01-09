@@ -55,8 +55,18 @@ as soon as reasonably possible.
 
 License / Free to use
 ---------------------
-Unless otherwise stated, the content of this website is dedicated to the public domain (CC0 1.0).
-You may copy, modify, distribute, and use it without asking permission.
+Unless otherwise stated, the website code/text content is dedicated to the public domain (CC0 1.0).
+Music is licensed separately (see "Music license" above).
+
+
+Music license (Attribution required)
+------------------------------------
+Music tracks published on this website under the artist name "NOMKEE" are free to use
+for private and commercial projects, including downloads, remixes, edits, and redistribution,
+as long as credit is given.
+
+Required credit format:
+"NOMKEE - <Track Name>"
 
 Third-party content
 -------------------
@@ -65,6 +75,9 @@ above dedication and remains subject to the respective rights and licenses of th
 
 No responsibility for third-party services
 ------------------------------------------
+If a platform supports clickable credits, please link to fl97-mo.de (optional, appreciated).
+If a track is stated to have a different license, that license overrides this section.
+
 GitHub Pages and Cloudflare are third-party services used to provide this site.
 Their own terms and policies apply. See PRIVACY.DIR for data protection details.
 

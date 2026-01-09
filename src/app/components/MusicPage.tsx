@@ -255,10 +255,16 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
         <span className="text-muted-foreground">]</span>
       </h2>
 
-      <p className="text-muted-foreground mb-6 text-sm">
-        <span className="text-primary">{">"}</span>{" "}
+    <p className="text-muted-foreground text-sm">
+      <span className="text-primary">{">"}</span>{" "}
+      I produce music under the alias: <span className="text-primary">NOMKEE</span>.
+    </p>
+
+    <p className="text-muted-foreground mb-6 text-sm">
+      <span className="text-primary">{">"}</span>{" "}
       File upload processed locally by browser. This solution is to showcase the EQ until the audio-hosting server is ready.
-      </p>
+    </p>
+
 
       {fileError && (
         <div className="mb-4 border border-primary/25 rounded bg-background/40 px-4 py-3 text-xs tracking-widest text-muted-foreground">
