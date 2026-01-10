@@ -160,4 +160,107 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+
+}  @layer components {
+  .crt-range {
+    --fill: 0;
+    --buffer: 0;
+
+    --crt-on: rgba(0, 255, 65, 0.88);
+    --crt-buf: rgba(0, 255, 65, 0.26);
+    --crt-off: rgba(0, 255, 65, 0.08);
+
+    --track-bg: linear-gradient(
+      to right,
+      var(--crt-on) 0%,
+      var(--crt-on) calc(var(--fill) * 1%),
+      var(--crt-off) calc(var(--fill) * 1%),
+      var(--crt-off) 100%
+    );
+
+    -webkit-appearance: none;
+    appearance: none;
+
+    height: 14px;
+    padding: 2px;
+    border-radius: 3px;
+
+    border: 2px solid rgba(0, 0, 0, 0.78);
+    background: var(--track-bg);
+    background-clip: content-box;
+    background-origin: content-box;
+
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 255, 65, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.65);
+    outline: none;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .crt-range--seek {
+    --track-bg: linear-gradient(
+      to right,
+      var(--crt-on) 0%,
+      var(--crt-on) calc(var(--fill) * 1%),
+      var(--crt-buf) calc(var(--fill) * 1%),
+      var(--crt-buf) calc(var(--buffer) * 1%),
+      var(--crt-off) calc(var(--buffer) * 1%),
+      var(--crt-off) 100%
+    );
+  }
+
+  .crt-range:focus-visible {
+    outline: 2px solid rgba(0, 255, 65, 0.14);
+    outline-offset: 3px;
+  }
+
+  .crt-range::-webkit-slider-runnable-track {
+    height: 14px;
+    background: transparent;
+    border: none;
+  }
+
+.crt-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+
+  width: 10px;
+  height: 22px;
+  margin-top: -6px;
+
+  background:
+    linear-gradient(var(--crt-on), var(--crt-on)) center / 4px 100% no-repeat;
+
+  border: none;
+  border-radius: 1px;
+  box-shadow: none;
+}
+
+
+.crt-range:active::-webkit-slider-thumb {
+  background:
+    linear-gradient(rgba(0, 255, 65, 0.98), rgba(0, 255, 65, 0.98)) center / 4px 100% no-repeat;
+}
+
+
+  .crt-range::-moz-range-track {
+    height: 14px;
+    background: transparent;
+    border: none;
+  }
+
+.crt-range::-moz-range-thumb {
+  width: 10px;
+  height: 22px;
+
+  background:
+    linear-gradient(var(--crt-on), var(--crt-on)) center / 4px 100% no-repeat;
+
+  border: none;
+  border-radius: 1px;
+  box-shadow: none;
+}
+
 }

@@ -254,7 +254,7 @@ export function AstronautLogoLab() {
       <h2 className="text-primary mb-3 flex items-center gap-2">
         <span className="text-muted-foreground">[</span>
         <TypewriterText
-          text="ASTRONAUT_LOGO_LAB.DIR"
+          text="ASTRO_LAB.DIR"
           speedMs={18}
           showCursor={false}
         />

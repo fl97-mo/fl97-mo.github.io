@@ -25,7 +25,7 @@ const ITEMS: MusicItem[] = [
     category: "Track",
     year: 2018,
     tags: ["Electro", "House", "Spacey"],
-    file: "NOMKEE - Enter the UFO.mp3",
+    file: "NOMKEE_-_Enter_the_UFO.mp3",
     detail:
       "> INFO\n" +
       "-- One of my earliest tracks, and also one of the most popular.\n" +
@@ -40,7 +40,7 @@ const ITEMS: MusicItem[] = [
     category: "Track",
     year: 2020,
     tags: ["Electro", "Dark", "Effects"],
-    file: "NOMKEE - I know you better.mp3",
+    file: "NOMKEE_-_I_know_you_better.wav",
     detail:
       "> INFO\n" +
       "-- Darker, still dance-driven.\n" +
@@ -55,7 +55,7 @@ const ITEMS: MusicItem[] = [
     category: "Intro",
     year: 2020,
     tags: ["Clocks", "Deep-House", "Unfinished"],
-    file: "NOMKEE - Dont want to look away.mp3",
+    file: "NOMKEE_-_Dont_want_to_look_away.mp3",
     detail:
       "> INFO\n" +
       "-- Short experiment, not a finished song.\n" +
@@ -69,7 +69,7 @@ const ITEMS: MusicItem[] = [
     category: "Action music snippet",
     year: 2022,
     tags: ["Cyberpunk", "Hard", "Unfinished"],
-    file: "Nomkee - Rayguns everywhere.wav",
+    file: "Nomkee_-_Rayguns_everywhere.wav",
     detail:
       "> INFO\n" +
       "-- Very short action snippet, pure experiment.\n" +
@@ -77,35 +77,35 @@ const ITEMS: MusicItem[] = [
       "-- Rediscovered it in 2025 and thought: why not.\n",
   },
 ];
+const AUDIO_BASE = import.meta.env.DEV ? "/audio/" : "https://audio.fl97-mo.de/";
 
-const MAX_AUDIO_MB = 80;
-const MAX_AUDIO_BYTES = MAX_AUDIO_MB * 1024 * 1024;
+function streamHref(file: string) {
+  const raw = file.replace(/^\/+/, "");
+  if (raw.includes("..")) throw new Error("Invalid file path.");
 
-function validateAudioFile(file: File) {
-  if (!file.type || !file.type.startsWith("audio/")) {
-    throw new Error("Only audio files are allowed.");
-  }
-  if (file.size > MAX_AUDIO_BYTES) {
-    throw new Error(`File too large. Max ${MAX_AUDIO_MB}MB.`);
-  }
-}
-
-function publicHref(file: string) {
-  const clean = file.replace(/^\/+/, "");
-  if (clean.includes("..") || clean.includes(":")) {
-    throw new Error("Invalid file path.");
-  }
-
-  const url = new URL(clean, document.baseURI);
-  if (url.origin !== location.origin) {
-    throw new Error("Cross-origin download blocked.");
-  }
-
-  return url.toString();
+  const encoded = raw.split("/").map(encodeURIComponent).join("/");
+  return AUDIO_BASE.startsWith("/") ? `${AUDIO_BASE}${encoded}` : new URL(encoded, AUDIO_BASE).toString();
 }
 
 
-function MusicItemRow({ item, isOpen }: { item: MusicItem; isOpen: boolean }) {
+
+function splitArtistTitle(name: string) {
+  const parts = name.split(" - ");
+  if (parts.length >= 2) {
+    return { artist: parts[0].trim(), title: parts.slice(1).join(" - ").trim() };
+  }
+  return { artist: undefined, title: name.trim() };
+}
+
+function MusicItemRow({
+  item,
+  isOpen,
+  onPlay,
+}: {
+  item: MusicItem;
+  isOpen: boolean;
+  onPlay: () => void;
+}) {
   return (
     <Accordion.Item
       value={item.id}
@@ -158,22 +158,36 @@ function MusicItemRow({ item, isOpen }: { item: MusicItem; isOpen: boolean }) {
                 <span className="text-primary">{"-- FILE:"}</span> {item.file}
               </div>
 
-              <a
-                href={publicHref(item.file)}
-                download
-                className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all text-xs tracking-widest shrink-0"
-                style={{
-                  boxShadow:
-                    "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
-                }}
-                onClick={() => {
-                  primeAudio()
-                    .then(() => playSound("TERM", 0.18, 1.0, 420))
-                    .catch(() => {});
-                }}
-              >
-                DOWNLOAD
-              </a>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    primeAudio().then(() => playSound("TERM", 0.18, 1.0, 420)).catch(() => {});
+                    onPlay();
+                  }}
+                  className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all text-xs tracking-widest"
+                  style={{
+                    boxShadow:
+                      "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
+                  }}
+                >
+                  PLAY
+                </button>
+
+                <a
+                  href={streamHref(item.file)}
+                  download
+                  className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
+                  style={{
+                    boxShadow:
+                      "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                  }}
+                  onClick={() => {
+                    primeAudio().then(() => playSound("TERM", 0.18, 1.0, 420)).catch(() => {});
+                  }}
+                >
+                  DOWNLOAD
+                </a>
+              </div>
             </div>
           )}
 
@@ -187,15 +201,10 @@ function MusicItemRow({ item, isOpen }: { item: MusicItem; isOpen: boolean }) {
 }
 
 export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
-  const { soundEnabled, eqQueue, eqFiles, setEqFile, requestEqPlay } = useUI();
+  const { soundEnabled, setEqQueue, requestEqPlay } = useUI();
 
   const [open, setOpen] = useState<string[]>([]);
-  const [fileError, setFileError] = useState<string | null>(null);
   const openRef = useRef<string[]>([]);
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const pendingIdRef = useRef<string | null>(null);
-  const pendingAutoPlayRef = useRef(false);
 
   useEffect(() => {
     openRef.current = open;
@@ -205,9 +214,7 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
     if (soundEnabled) {
       const openedNow = next.some((id) => !openRef.current.includes(id));
       if (openedNow) {
-        primeAudio()
-          .then(() => playSound("TERM", 0.2, 1.0, 400))
-          .catch(() => {});
+        primeAudio().then(() => playSound("TERM", 0.2, 1.0, 400)).catch(() => {});
       }
     }
     setOpen(next);
@@ -215,36 +222,25 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
 
   const openSet = useMemo(() => new Set(open), [open]);
 
-  const pickFileFor = (id: string, autoPlay: boolean) => {
-    pendingIdRef.current = id;
-    pendingAutoPlayRef.current = autoPlay;
-    fileInputRef.current?.click();
-  };
+  const eqTracks = useMemo(() => {
+    return ITEMS.filter((i) => !!i.file).map((i) => {
+      const { artist, title } = splitArtistTitle(i.name);
+      const url = streamHref(i.file!);
+      return {
+        id: i.id,
+        artist,
+        title,
+        year: i.year ? String(i.year) : undefined,
+        streamUrl: url,
+        downloadUrl: url,
+      };
+    });
+  }, []);
 
   const doPlay = (id: string) => {
+    setEqQueue(eqTracks);
     requestEqPlay(id);
     onOpenEQ();
-  };
-
-  const onPickedFile = (file: File | null) => {
-    const id = pendingIdRef.current;
-    const autoPlay = pendingAutoPlayRef.current;
-
-    pendingIdRef.current = null;
-    pendingAutoPlayRef.current = false;
-
-    if (!id || !file) return;
-
-    try {
-      validateAudioFile(file);
-      setFileError(null);
-    } catch (err) {
-      setFileError(err instanceof Error ? err.message : "Invalid file.");
-      return;
-    }
-
-    setEqFile(id, file);
-    if (autoPlay) doPlay(id);
   };
 
   return (
@@ -255,96 +251,24 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
         <span className="text-muted-foreground">]</span>
       </h2>
 
-    <p className="text-muted-foreground text-sm">
-      <span className="text-primary">{">"}</span>{" "}
-      I produce music under the alias: <span className="text-primary">NOMKEE</span>.
-    </p>
+      <p className="text-muted-foreground text-sm">
+        <span className="text-primary">{">"}</span>{" "}
+        I produce music under the alias: <span className="text-primary">NOMKEE</span>.
+      </p>
 
-    <p className="text-muted-foreground mb-6 text-sm">
-      <span className="text-primary">{">"}</span>{" "}
-      File upload processed locally by browser. This solution is to showcase the EQ until the audio-hosting server is ready.
-    </p>
-
-
-      {fileError && (
-        <div className="mb-4 border border-primary/25 rounded bg-background/40 px-4 py-3 text-xs tracking-widest text-muted-foreground">
-          <span className="text-primary">{"-- ERROR:"}</span> {fileError}
-        </div>
-      )}
-
-      <div className="border border-primary/20 rounded bg-background/40 p-4 mb-6">
-        <div className="text-xs text-muted-foreground tracking-widest mb-3">TRACK SLOTS</div>
-
-        <div className="space-y-2">
-          {eqQueue.map((t) => {
-            const f = eqFiles[t.id];
-            const loaded = !!f;
-
-            return (
-              <div
-                key={t.id}
-                className="border border-primary/15 rounded bg-background/30 px-3 py-3 flex flex-col gap-2"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-primary tracking-widest text-sm truncate">{t.title || t.id}</div>
-                    <div className="text-[11px] text-muted-foreground tracking-widest truncate">
-                      {loaded ? `-- FILE: ${f!.name} (${Math.round(f!.size / 1024)}KB)` : "-- FILE: (none)"}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => pickFileFor(t.id, false)}
-                      className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
-                      style={{
-                        boxShadow:
-                          "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
-                      }}
-                    >
-                      LOAD
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (!loaded) pickFileFor(t.id, true);
-                        else doPlay(t.id);
-                      }}
-                      className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all text-xs tracking-widest"
-                      style={{
-                        boxShadow:
-                          "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
-                      }}
-                    >
-                      PLAY
-                    </button>
-                  </div>
-                </div>
-
-                <div className="text-[10px] text-muted-foreground tracking-widest">
-                  <span className="text-primary">{"--"}</span> Click PLAY to auto-open EQUALIZER.DIR
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.currentTarget.files?.[0] ?? null;
-            e.currentTarget.value = "";
-            onPickedFile(file);
-          }}
-        />
-      </div>
+      <p className="text-muted-foreground mb-6 text-sm">
+        <span className="text-primary">{">"}</span>{" "}
+        Tracks are streamed. Press PLAY to open the song in EQUALIZER.DIR.
+      </p>
 
       <Accordion.Root type="multiple" value={open} onValueChange={handleChange} className="space-y-4">
         {ITEMS.map((item) => (
-          <MusicItemRow key={item.id} item={item} isOpen={openSet.has(item.id)} />
+          <MusicItemRow
+            key={item.id}
+            item={item}
+            isOpen={openSet.has(item.id)}
+            onPlay={() => doPlay(item.id)}
+          />
         ))}
       </Accordion.Root>
     </section>

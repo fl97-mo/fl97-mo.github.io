@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>fl97-mo</title>
+
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#050805" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
-
 
     <style>
       html,
@@ -21,7 +25,7 @@
         color: #00ff41;
         min-height: 100%;
       }
-      #root {
+      html:not([data-mounted="1"]) #root {
         visibility: hidden;
       }
     </style>
@@ -29,14 +33,6 @@
 
   <body>
     <div id="root"></div>
-
-    <script>
-      window.addEventListener("DOMContentLoaded", () => {
-        const root = document.getElementById("root");
-        if (root) root.style.visibility = "visible";
-      });
-    </script>
-
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

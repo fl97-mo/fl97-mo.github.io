@@ -11,4 +11,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  server: {
+    proxy: {
+      "/audio": {
+        target: "https://audio.fl97-mo.de",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/audio/, ""),
+      },
+    },
+  },
 });

@@ -73,19 +73,13 @@ function writeBoolToSessionStorage(key: string, value: boolean) {
   } catch {}
 }
 
-const DEFAULT_EQ_QUEUE: EqTrack[] = [
-  { id: "slot-1", title: "SLOT_01" },
-  { id: "slot-2", title: "SLOT_02" },
-  { id: "slot-3", title: "SLOT_03" },
-];
-
 export function UIProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(false);
   const [effectsEnabled, setEffectsEnabledState] = useState(true);
   const [introDone, setIntroDone] = useState(false);
 
-  const [eqQueue, setEqQueueState] = useState<EqTrack[]>(DEFAULT_EQ_QUEUE);
-  const [eqActiveId, setEqActiveIdState] = useState<string | null>(DEFAULT_EQ_QUEUE[0]?.id ?? null);
+  const [eqQueue, setEqQueueState] = useState<EqTrack[]>([]);
+  const [eqActiveId, setEqActiveIdState] = useState<string | null>(null);
   const [eqRepeat, setEqRepeat] = useState<EqRepeat>("OFF");
   const [eqFiles, setEqFiles] = useState<Record<string, File | undefined>>({});
   const [eqPendingPlayId, setEqPendingPlayId] = useState<string | null>(null);

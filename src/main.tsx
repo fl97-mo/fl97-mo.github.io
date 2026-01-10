@@ -10,3 +10,6 @@ createRoot(document.getElementById("root")!).render(
   </UIProvider>
 );
 
+requestAnimationFrame(() => {
+  document.documentElement.dataset.mounted = "1";
+});

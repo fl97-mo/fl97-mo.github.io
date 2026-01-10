@@ -109,6 +109,7 @@ export function EqualizerPage() {
 
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [bufferedTime, setBufferedTime] = useState(0);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -222,14 +223,17 @@ export function EqualizerPage() {
     }
 
     const file = (eqFiles && (eqFiles as any)[t.id]) || null;
-    const srcUrl = file ? URL.createObjectURL(file) : t.streamUrl ? encodeURI(t.streamUrl) : "";
+    const srcUrl = file ? URL.createObjectURL(file) : (t.streamUrl ?? "");
 
     if (file) objectUrlRef.current = srcUrl;
 
     audio.pause();
+    audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
     if (srcUrl) audio.src = srcUrl;
     else audio.removeAttribute("src");
     audio.load();
+
 
     setLoadedLabel(`${t.artist ? `${t.artist} — ` : ""}${t.title}`);
     setSourceKind(file ? "LOCAL_FILE" : t.streamUrl ? "STREAM_URL" : "NONE");
@@ -256,6 +260,55 @@ export function EqualizerPage() {
       })();
     }
   }, [activeTrack, eqFiles, eqQueue, eqActiveId, setEqActiveId, consumeEqPendingPlay, VIS_EDGES]);
+useEffect(() => {
+  const audio = audioRef.current;
+  if (!audio) return;
+
+  const update = () => {
+    const d = Number.isFinite(audio.duration) ? audio.duration : 0;
+    if (!d || d <= 0) {
+      setBufferedTime(0);
+      return;
+    }
+
+    const buf = audio.buffered;
+    if (!buf || buf.length === 0) {
+      setBufferedTime(0);
+      return;
+    }
+
+    const t = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+
+    let end = 0;
+    for (let i = 0; i < buf.length; i++) {
+      const s = buf.start(i);
+      const e = buf.end(i);
+      if (t >= s && t <= e) {
+        end = e;
+        break;
+      }
+      end = Math.max(end, e);
+    }
+
+    setBufferedTime(end);
+  };
+
+  audio.addEventListener("progress", update);
+  audio.addEventListener("loadedmetadata", update);
+  audio.addEventListener("durationchange", update);
+  audio.addEventListener("timeupdate", update);
+  audio.addEventListener("seeked", update);
+
+  update();
+
+  return () => {
+    audio.removeEventListener("progress", update);
+    audio.removeEventListener("loadedmetadata", update);
+    audio.removeEventListener("durationchange", update);
+    audio.removeEventListener("timeupdate", update);
+    audio.removeEventListener("seeked", update);
+  };
+}, []);
 
   useEffect(() => {
     const g = gainRef.current;
@@ -527,7 +580,13 @@ export function EqualizerPage() {
                 timeRef.current = t;
                 setCurrentTime(t);
               }}
-              className="w-full accent-primary"
+              className="w-full crt-range crt-range--seek"
+style={{
+  ["--fill" as any]: duration > 0 ? (clamp(currentTime, 0, duration) / duration) * 100 : 0,
+  ["--buffer" as any]:
+    duration > 0 ? (clamp(Math.max(bufferedTime, currentTime), 0, duration) / duration) * 100 : 0,
+}}
+
             />
             <div className="text-xs text-muted-foreground tracking-widest w-16 text-right">{formatTime(duration)}</div>
           </div>
@@ -541,7 +600,9 @@ export function EqualizerPage() {
               step={0.01}
               value={volume}
               onChange={(e) => setVolume(Number((e.target as HTMLInputElement).value))}
-              className="w-full accent-primary"
+              className="w-full crt-range"
+style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
+
             />
             <div className="text-xs text-primary/80 w-14 text-right tabular-nums">{Math.round(volume * 100)}%</div>
           </div>
@@ -600,7 +661,7 @@ export function EqualizerPage() {
             </div>
           )}
 
-          <audio ref={audioRef} preload="metadata" />
+          <audio ref={audioRef} preload="auto" crossOrigin="anonymous" />
         </div>
 
         <aside className="border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-4">
