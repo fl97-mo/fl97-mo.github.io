@@ -72,6 +72,30 @@ Providers’ policies (for transparency):
 - GitHub Privacy Statement (GitHub Pages is part of GitHub’s services)
 - Cloudflare Privacy Policy / Trust & GDPR resources
 
+4b) Audio hosting (audio.fl97-mo.de)
+------------------------------------
+Audio files are served from a separate domain: audio.fl97-mo.de.
+When you stream or download audio, your browser requests media files from that server.
+
+Processed data (technical access data):
+- IP address
+- date and time of the request
+- requested audio file / URL
+- referrer (if transmitted by your browser)
+- user agent / device information
+
+Purpose:
+- delivering the audio content
+- ensuring stability and protecting the service from abuse
+
+Legal basis:
+- Art. 6(1)(f) GDPR (legitimate interests): reliable and secure operation
+
+Retention:
+- Server/provider logs may be stored for a limited period for security and operation.
+- If the audio service is delivered through a CDN or reverse proxy, that provider may also process logs.
+
+
 5) International data transfers (third countries)
 -------------------------------------------------
 GitHub and Cloudflare are international providers and may process data in countries

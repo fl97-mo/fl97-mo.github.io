@@ -35,7 +35,7 @@ export default function App() {
       primedRef.current = true;
 
       try {
-        await primeAudio();
+        await primeAudio(["TERM", "BTN_MECH", "STATIC", "TYPING", "NOISE"]);
         if (soundEnabled) startStatic();
       } catch {}
     };

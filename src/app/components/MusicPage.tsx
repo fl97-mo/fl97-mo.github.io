@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TypewriterText } from "./Typewriter";
 import { useUI } from "../store/ui";
-import { playSound, primeAudio } from "../utils/sfx";
+import { playSoundAsync } from "../utils/sfx";
 
 type MusicItem = {
   id: string;
@@ -161,7 +161,7 @@ function MusicItemRow({
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => {
-                    primeAudio().then(() => playSound("TERM", 0.18, 1.0, 420)).catch(() => {});
+                    void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
                     onPlay();
                   }}
                   className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all text-xs tracking-widest"
@@ -182,7 +182,7 @@ function MusicItemRow({
                       "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
                   }}
                   onClick={() => {
-                    primeAudio().then(() => playSound("TERM", 0.18, 1.0, 420)).catch(() => {});
+                   void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
                   }}
                 >
                   DOWNLOAD
@@ -210,15 +210,21 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
     openRef.current = open;
   }, [open]);
 
-  const handleChange = (next: string[]) => {
-    if (soundEnabled) {
-      const openedNow = next.some((id) => !openRef.current.includes(id));
-      if (openedNow) {
-        primeAudio().then(() => playSound("TERM", 0.2, 1.0, 400)).catch(() => {});
-      }
+const handleChange = (next: string[]) => {
+  if (soundEnabled) {
+    const openedNow = next.some((id) => !openRef.current.includes(id));
+    const closedNow = openRef.current.some((id) => !next.includes(id));
+
+    if (openedNow) {
+      void playSoundAsync("TERM", 0.2, 1.0, 400).catch(() => {});
+    } else if (closedNow) {
+      void playSoundAsync("TERM", 0.18, 0.92, 0).catch(() => {});
     }
-    setOpen(next);
-  };
+  }
+
+  setOpen(next);
+};
+
 
   const openSet = useMemo(() => new Set(open), [open]);
 

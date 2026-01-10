@@ -604,7 +604,7 @@ style={{
 style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
             />
-            <div className="text-xs text-primary/80 w-14 text-right tabular-nums">{Math.round(volume * 100)}%</div>
+            <div className="text-xs text-primary/80 w-16 text-right tabular-nums">{Math.round(volume * 100)}%</div>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">

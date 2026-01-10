@@ -26,8 +26,10 @@ No paid services are offered and it is not operated as a business.
 Hosting / Infrastructure
 ------------------------
 This site is hosted via GitHub Pages and delivered through Cloudflare (CDN/DNS).
-Both providers may technically process access data (e.g., IP address, user agent)
-to provide and secure the website. See PRIVACY.DIR for details.  [*]
+
+Audio files are hosted separately on audio.fl97-mo.de (self-hosted file serving).
+When you stream or download audio, technical access data is processed to deliver the files.
+See PRIVACY.DIR for details.  [*]
 
 Disclaimer (no legal advice)
 ----------------------------

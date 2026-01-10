@@ -1,4 +1,4 @@
-type SfxName = "BUTTON" | "BTN_MECH" | "NOISE" | "STATIC" | "TERM" | "TYPING";
+export type SfxName = "BUTTON" | "BTN_MECH" | "NOISE" | "STATIC" | "TERM" | "TYPING";
 
 const FILES: Record<SfxName, string> = {
   BUTTON: "/BUTTON.wav",
@@ -9,13 +9,15 @@ const FILES: Record<SfxName, string> = {
   TYPING: "/TYPING.wav",
 };
 
-
 let ctx: AudioContext | null = null;
+
 const buffers: Partial<Record<SfxName, AudioBuffer>> = {};
+const inflight: Partial<Record<SfxName, Promise<void>>> = {};
 const lastPlay: Partial<Record<SfxName, number>> = {};
 
 let hoverSource: AudioBufferSourceNode | null = null;
 let hoverGain: GainNode | null = null;
+
 let staticSource: AudioBufferSourceNode | null = null;
 let staticGain: GainNode | null = null;
 
@@ -30,34 +32,35 @@ const NAV_PITCH_MAX = 1.05;
 const NAV_RESET_MS = 1000;
 
 function getCtx() {
-  if (!ctx) {
-    ctx = new AudioContext({ latencyHint: "interactive" });
-  }
+  if (!ctx) ctx = new AudioContext({ latencyHint: "interactive" });
   return ctx;
 }
 
-export async function primeAudio() {
-  const audioCtx = getCtx();
+async function ensureLoaded(name: SfxName, audioCtx: AudioContext) {
+  if (buffers[name]) return;
+  if (inflight[name]) return inflight[name];
 
-  if (audioCtx.state === "suspended") {
-    await audioCtx.resume();
-  }
-
-  for (const key of Object.keys(FILES) as SfxName[]) {
-    if (buffers[key]) continue;
-
-    const res = await fetch(FILES[key]);
+  inflight[name] = (async () => {
+    const res = await fetch(FILES[name], { cache: "force-cache" });
+    if (!res.ok) throw new Error(`SFX fetch failed: ${name} (${res.status})`);
     const arr = await res.arrayBuffer();
-    buffers[key] = await audioCtx.decodeAudioData(arr);
-  }
+    buffers[name] = await audioCtx.decodeAudioData(arr);
+  })().finally(() => {
+    delete inflight[name];
+  });
+
+  return inflight[name];
 }
 
-export function playSound(
-  name: SfxName,
-  volume = 1,
-  playbackRate = 1.0,
-  attackMs = 0
-) {
+export async function primeAudio(names?: readonly SfxName[]) {
+  const audioCtx = getCtx();
+  if (audioCtx.state === "suspended") await audioCtx.resume();
+
+  const list = (names ?? (Object.keys(FILES) as SfxName[])) as readonly SfxName[];
+  await Promise.all(list.map((n) => ensureLoaded(n, audioCtx)));
+}
+
+export function playSound(name: SfxName, volume = 1, playbackRate = 1.0, attackMs = 0) {
   const now = performance.now();
   if (lastPlay[name] && now - lastPlay[name]! < 70) return;
   lastPlay[name] = now;
@@ -66,6 +69,7 @@ export function playSound(
   if (!buffer) return;
 
   const audioCtx = getCtx();
+
   const src = audioCtx.createBufferSource();
   const gain = audioCtx.createGain();
 
@@ -86,30 +90,46 @@ export function playSound(
   src.start();
 }
 
+export async function playSoundAsync(
+  name: SfxName,
+  volume = 1,
+  playbackRate = 1.0,
+  attackMs = 0
+) {
+  await primeAudio([name]);
+  playSound(name, volume, playbackRate, attackMs);
+}
+
 export function playMechClick() {
   const now = performance.now();
 
-  if (now - lastNavTime > NAV_RESET_MS) {
-    navPitch = 1.0;
-  }
+  if (now - lastNavTime > NAV_RESET_MS) navPitch = 1.0;
 
-  playSound("BTN_MECH", 0.4, navPitch);
+  if (!buffers.BTN_MECH) {
+    void playSoundAsync("BTN_MECH", 0.4, navPitch).catch(() => {});
+  } else {
+    playSound("BTN_MECH", 0.4, navPitch);
+  }
 
   navPitch = Math.min(navPitch + NAV_PITCH_STEP, NAV_PITCH_MAX);
   lastNavTime = now;
 }
 
-
 export function startHoverNoise(volume = 0.9) {
-  const buffer = buffers.NOISE;
-  if (!buffer) return;
   if (hoverSource) return;
+
+  if (!buffers.NOISE) {
+    void primeAudio(["NOISE"])
+      .then(() => startHoverNoise(volume))
+      .catch(() => {});
+    return;
+  }
 
   const audioCtx = getCtx();
   const src = audioCtx.createBufferSource();
   const gain = audioCtx.createGain();
 
-  src.buffer = buffer;
+  src.buffer = buffers.NOISE!;
   src.loop = true;
   gain.gain.value = volume;
 
@@ -124,10 +144,7 @@ export function stopHoverNoise() {
   if (!hoverSource || !hoverGain) return;
 
   const audioCtx = getCtx();
-  hoverGain.gain.exponentialRampToValueAtTime(
-    0.001,
-    audioCtx.currentTime + 0.05
-  );
+  hoverGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
 
   try {
     hoverSource.stop(audioCtx.currentTime + 0.06);
@@ -139,6 +156,7 @@ export function stopHoverNoise() {
   hoverSource = null;
   hoverGain = null;
 }
+
 function startLoop(
   name: SfxName,
   setRef: (src: AudioBufferSourceNode | null, gain: GainNode | null) => void,
@@ -148,14 +166,18 @@ function startLoop(
   const { src } = getRef();
   if (src) return;
 
-  const buffer = buffers[name];
-  if (!buffer) return;
+  if (!buffers[name]) {
+    void primeAudio([name])
+      .then(() => startLoop(name, setRef, getRef, volume))
+      .catch(() => {});
+    return;
+  }
 
   const audioCtx = getCtx();
   const source = audioCtx.createBufferSource();
   const gain = audioCtx.createGain();
 
-  source.buffer = buffer;
+  source.buffer = buffers[name]!;
   source.loop = true;
   gain.gain.value = volume;
 
@@ -182,8 +204,6 @@ function stopLoop(
   src.disconnect();
   gain.disconnect();
   setRef(null, null);
-
-
 }
 
 export function startStatic(volume = 0.15) {
