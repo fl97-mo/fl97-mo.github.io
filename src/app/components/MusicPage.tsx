@@ -14,7 +14,9 @@ type MusicItem = {
   tags?: string[];
   category?: string;
   year?: number;
+
   file?: string;
+  publicFile?: string;
 };
 
 const ITEMS: MusicItem[] = [
@@ -26,6 +28,7 @@ const ITEMS: MusicItem[] = [
     year: 2018,
     tags: ["Electro", "House", "Spacey"],
     file: "NOMKEE_-_Enter_the_UFO.mp3",
+    publicFile: "NOMKEE - Enter the UFO.mp3",
     detail:
       "> INFO\n" +
       "-- One of my earliest tracks, and also one of the most popular.\n" +
@@ -41,6 +44,7 @@ const ITEMS: MusicItem[] = [
     year: 2020,
     tags: ["Electro", "Dark", "Effects"],
     file: "NOMKEE_-_I_know_you_better.wav",
+    publicFile: "NOMKEE - I know you better.mp3",
     detail:
       "> INFO\n" +
       "-- Darker, still dance-driven.\n" +
@@ -56,6 +60,7 @@ const ITEMS: MusicItem[] = [
     year: 2020,
     tags: ["Clocks", "Deep-House", "Unfinished"],
     file: "NOMKEE_-_Dont_want_to_look_away.mp3",
+    publicFile: "NOMKEE - Dont want to look away.mp3",
     detail:
       "> INFO\n" +
       "-- Short experiment, not a finished song.\n" +
@@ -70,6 +75,7 @@ const ITEMS: MusicItem[] = [
     year: 2022,
     tags: ["Cyberpunk", "Hard", "Unfinished"],
     file: "Nomkee_-_Rayguns_everywhere.wav",
+    publicFile: "Nomkee - Rayguns everywhere.wav",
     detail:
       "> INFO\n" +
       "-- Very short action snippet, pure experiment.\n" +
@@ -77,17 +83,32 @@ const ITEMS: MusicItem[] = [
       "-- Rediscovered it in 2025 and thought: why not.\n",
   },
 ];
-const AUDIO_BASE = import.meta.env.DEV ? "/audio/" : "https://audio.fl97-mo.de/";
 
-function streamHref(file: string) {
+const STREAM_BASE = import.meta.env.DEV ? "/audio/" : "https://audio.fl97-mo.de/";
+
+const PUBLIC_BASE = import.meta.env.BASE_URL || "/";
+
+function assetHref(base: string, file: string) {
   const raw = file.replace(/^\/+/, "");
   if (raw.includes("..")) throw new Error("Invalid file path.");
 
   const encoded = raw.split("/").map(encodeURIComponent).join("/");
-  return AUDIO_BASE.startsWith("/") ? `${AUDIO_BASE}${encoded}` : new URL(encoded, AUDIO_BASE).toString();
+
+  if (base.startsWith("/")) {
+    const prefix = base.endsWith("/") ? base : `${base}/`;
+    return `${prefix}${encoded}`;
+  }
+
+  return new URL(encoded, base).toString();
 }
 
+function streamHref(file: string) {
+  return assetHref(STREAM_BASE, file);
+}
 
+function downloadHref(file: string) {
+  return assetHref(PUBLIC_BASE, file);
+}
 
 function splitArtistTitle(name: string) {
   const parts = name.split(" - ");
@@ -106,6 +127,8 @@ function MusicItemRow({
   isOpen: boolean;
   onPlay: () => void;
 }) {
+  const downloadFile = item.publicFile ?? item.file;
+
   return (
     <Accordion.Item
       value={item.id}
@@ -155,7 +178,13 @@ function MusicItemRow({
           {item.file && (
             <div className="pt-3 border-t border-primary/15 flex items-center justify-between gap-3">
               <div className="text-[10px] text-muted-foreground tracking-widest truncate">
-                <span className="text-primary">{"-- FILE:"}</span> {item.file}
+                <span className="text-primary">{"-- STREAM:"}</span> {item.file}
+                {item.publicFile && (
+                  <>
+                    {"  "}
+                    <span className="text-primary">{"-- DL:"}</span> {item.publicFile}
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
@@ -173,20 +202,22 @@ function MusicItemRow({
                   PLAY
                 </button>
 
-                <a
-                  href={streamHref(item.file)}
-                  download
-                  className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
-                  style={{
-                    boxShadow:
-                      "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
-                  }}
-                  onClick={() => {
-                   void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
-                  }}
-                >
-                  DOWNLOAD
-                </a>
+                {downloadFile && (
+                  <a
+                    href={downloadHref(downloadFile)}
+                    download={downloadFile}
+                    className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
+                    style={{
+                      boxShadow:
+                        "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                    }}
+                    onClick={() => {
+                      void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
+                    }}
+                  >
+                    DOWNLOAD
+                  </a>
+                )}
               </div>
             </div>
           )}
@@ -210,35 +241,37 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
     openRef.current = open;
   }, [open]);
 
-const handleChange = (next: string[]) => {
-  if (soundEnabled) {
-    const openedNow = next.some((id) => !openRef.current.includes(id));
-    const closedNow = openRef.current.some((id) => !next.includes(id));
+  const handleChange = (next: string[]) => {
+    if (soundEnabled) {
+      const openedNow = next.some((id) => !openRef.current.includes(id));
+      const closedNow = openRef.current.some((id) => !next.includes(id));
 
-    if (openedNow) {
-      void playSoundAsync("TERM", 0.2, 1.0, 400).catch(() => {});
-    } else if (closedNow) {
-      void playSoundAsync("TERM", 0.18, 0.92, 0).catch(() => {});
+      if (openedNow) {
+        void playSoundAsync("TERM", 0.2, 1.0, 400).catch(() => {});
+      } else if (closedNow) {
+        void playSoundAsync("TERM", 0.18, 0.92, 0).catch(() => {});
+      }
     }
-  }
 
-  setOpen(next);
-};
-
+    setOpen(next);
+  };
 
   const openSet = useMemo(() => new Set(open), [open]);
 
   const eqTracks = useMemo(() => {
     return ITEMS.filter((i) => !!i.file).map((i) => {
       const { artist, title } = splitArtistTitle(i.name);
-      const url = streamHref(i.file!);
+      const streamUrl = streamHref(i.file!);
+      const downloadFile = i.publicFile ?? i.file!;
+      const dlUrl = downloadHref(downloadFile);
+
       return {
         id: i.id,
         artist,
         title,
         year: i.year ? String(i.year) : undefined,
-        streamUrl: url,
-        downloadUrl: url,
+        streamUrl,
+        downloadUrl: dlUrl,
       };
     });
   }, []);
