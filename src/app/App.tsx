@@ -116,7 +116,7 @@ export default function App() {
 
           <p className="mt-2 text-sm">Running on FLUX CAPACITOR | BUILD 0012231</p>
 
-          <div className="mt-6 pt-3 border-t border-primary/10 text-[10px] tracking-widest flex items-center justify-center gap-4">
+          <div className="mt-6 pt-3 border-t border-primary/10 text-xs tracking-widest flex items-center justify-center gap-4">
             <button
               onClick={() => {
                 if (soundEnabled) {

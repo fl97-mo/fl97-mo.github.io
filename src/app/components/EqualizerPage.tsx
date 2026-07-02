@@ -1,4 +1,6 @@
+import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Trash2, Upload } from "lucide-react";
 import { TypewriterText } from "./Typewriter";
 import { useUI } from "../store/ui";
 
@@ -14,8 +16,28 @@ type EqTrack = {
   artist?: string;
   year?: string;
   downloadUrl?: string;
-  streamUrl?: string;
 };
+
+const AUDIO_FILE_RE = /\.(aac|aiff?|flac|m4a|mp3|ogg|opus|wav|webm)$/i;
+
+function isAudioFile(file: File) {
+  return file.type.startsWith("audio/") || AUDIO_FILE_RE.test(file.name);
+}
+
+function titleFromFileName(name: string) {
+  return name.replace(/\.[^.]+$/, "") || name;
+}
+
+function makeLocalTrack(file: File, index: number): EqTrack {
+  const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 80) || "audio";
+
+  return {
+    id: `local-${Date.now()}-${index}-${safeName}`,
+    artist: "LOCAL_FILE",
+    title: titleFromFileName(file.name),
+    year: file.lastModified ? String(new Date(file.lastModified).getFullYear()) : undefined,
+  };
+}
 
 export function EqualizerPage() {
   const VIS_EDGES = useMemo(() => makeMidEmphasisEdges(VIS_COLUMNS), []);
@@ -37,6 +59,7 @@ export function EqualizerPage() {
   const lookActiveRef = useRef(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const spectrumRef = useRef<HTMLCanvasElement | null>(null);
   const walkersRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -96,13 +119,14 @@ export function EqualizerPage() {
     eqActiveId,
     eqFiles,
     eqRepeat,
+    setEqQueue,
     setEqActiveId,
+    setEqFile,
     cycleEqRepeat,
-    consumeEqPendingPlay,
   } = useUI();
 
   const [loadedLabel, setLoadedLabel] = useState<string>("NO_TRACK");
-  const [sourceKind, setSourceKind] = useState<"NONE" | "LOCAL_FILE" | "STREAM_URL">("NONE");
+  const [sourceKind, setSourceKind] = useState<"NONE" | "LOCAL_FILE">("NONE");
 
   const [volume, setVolume] = useState(0.9);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -141,6 +165,51 @@ export function EqualizerPage() {
     setEqActiveId(list[next].id);
   };
 
+  const handleUploadChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []).filter(isAudioFile);
+    event.target.value = "";
+
+    if (!files.length) {
+      setError("No supported audio file selected.");
+      return;
+    }
+
+    const tracks = files.map(makeLocalTrack);
+    setEqQueue(tracks);
+    tracks.forEach((track, index) => {
+      const file = files[index];
+      if (file) setEqFile(track.id, file);
+    });
+    setEqActiveId(tracks[0]?.id ?? null);
+    setError(null);
+  };
+
+  const clearQueue = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
+    setEqQueue([]);
+    setEqActiveId(null);
+    setLoadedLabel("NO_TRACK");
+    setSourceKind("NONE");
+    setIsPlaying(false);
+    durationRef.current = 0;
+    timeRef.current = 0;
+    setDuration(0);
+    setCurrentTime(0);
+    setBufferedTime(0);
+    setError(null);
+  };
+
   const ensureGraph = async () => {
     await ensureEqGraph({
       audio: audioRef.current,
@@ -172,7 +241,7 @@ export function EqualizerPage() {
     setError(null);
 
     if (!audio.src || sourceKind === "NONE") {
-      setError("No track loaded. Go to MUSIC.DIR and press PLAY on a song.");
+      setError("No track loaded. Upload an audio file first.");
       return;
     }
 
@@ -223,12 +292,12 @@ export function EqualizerPage() {
     }
 
     const file = (eqFiles && (eqFiles as any)[t.id]) || null;
-    const srcUrl = file ? URL.createObjectURL(file) : (t.streamUrl ?? "");
+    const srcUrl = file ? URL.createObjectURL(file) : "";
 
     if (file) objectUrlRef.current = srcUrl;
 
     audio.pause();
-    audio.crossOrigin = "anonymous";
+    audio.removeAttribute("crossorigin");
     audio.preload = "auto";
     if (srcUrl) audio.src = srcUrl;
     else audio.removeAttribute("src");
@@ -236,7 +305,7 @@ export function EqualizerPage() {
 
 
     setLoadedLabel(`${t.artist ? `${t.artist} — ` : ""}${t.title}`);
-    setSourceKind(file ? "LOCAL_FILE" : t.streamUrl ? "STREAM_URL" : "NONE");
+    setSourceKind(file ? "LOCAL_FILE" : "NONE");
     setIsPlaying(false);
 
     seekHeldRef.current = false;
@@ -245,8 +314,7 @@ export function EqualizerPage() {
     seekVelNormRef.current = 0;
     lastSeekRef.current = null;
 
-    const pending = consumeEqPendingPlay();
-    const shouldAuto = !!srcUrl && (forceAutoplayRef.current || pending === t.id);
+    const shouldAuto = !!srcUrl && forceAutoplayRef.current;
     forceAutoplayRef.current = false;
 
     if (shouldAuto) {
@@ -259,7 +327,7 @@ export function EqualizerPage() {
         });
       })();
     }
-  }, [activeTrack, eqFiles, eqQueue, eqActiveId, setEqActiveId, consumeEqPendingPlay, VIS_EDGES]);
+  }, [activeTrack, eqFiles, eqQueue, eqActiveId, setEqActiveId, VIS_EDGES]);
 useEffect(() => {
   const audio = audioRef.current;
   if (!audio) return;
@@ -502,8 +570,7 @@ useEffect(() => {
   const nowPlayingText = useMemo(() => {
     const list = (eqQueue ?? []) as EqTrack[];
     const q = list.length ? `${activeIndex + 1}/${list.length}` : "0/0";
-    const src =
-      sourceKind === "LOCAL_FILE" ? "LOCAL_FILE" : sourceKind === "STREAM_URL" ? "STREAM_URL" : "NONE";
+    const src = sourceKind === "LOCAL_FILE" ? "LOCAL_FILE" : "NONE";
 
     const trackLine =
       activeTrack && loadedLabel !== "NO_TRACK" ? `-- TRACK: ${loadedLabel}` : `-- TRACK: (none)`;
@@ -527,6 +594,52 @@ useEffect(() => {
         <span className="text-muted-foreground">]</span>
       </h2>
 
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="audio/*,.aac,.aiff,.aif,.flac,.m4a,.mp3,.ogg,.opus,.wav,.webm"
+        multiple
+        className="sr-only"
+        onChange={handleUploadChange}
+      />
+
+      <div className="mb-4 border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="text-muted-foreground text-sm">
+          <span className="text-primary">{">"}</span>{" "}
+          Upload local audio files, then press PLAY. The EQ reads directly from your browser.
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => uploadInputRef.current?.click()}
+            className="inline-flex items-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all"
+            style={{
+              boxShadow:
+                "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
+            }}
+          >
+            <Upload className="w-4 h-4" />
+            <span>UPLOAD AUDIO</span>
+          </button>
+
+          {(eqQueue?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={clearQueue}
+              className="inline-flex items-center gap-2 px-5 py-2 border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all"
+              style={{
+                boxShadow:
+                  "inset -2px -2px 0px rgba(0,255,65,0.14), inset 2px 2px 0px rgba(0,0,0,0.6)",
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>CLEAR QUEUE</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-[2.35fr_0.65fr] gap-4">
         <div className="border border-primary/20 rounded bg-background/40 p-4">
           <div className="border border-primary/15 rounded bg-background/30 p-3 mb-2">
@@ -537,7 +650,7 @@ useEffect(() => {
             <canvas ref={spectrumRef} className="w-full h-64 rounded" />
           </div>
 
-          <div className="mt-2 text-[10px] text-muted-foreground tracking-widest flex items-center justify-between gap-3">
+          <div className="mt-2 text-xs text-muted-foreground tracking-widest flex items-center justify-between gap-3">
             <div className="truncate">
               -- TRACK:{" "}
               <span className="text-primary/80">{loadedLabel === "NO_TRACK" ? "(none)" : loadedLabel}</span>
@@ -661,12 +774,12 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             </div>
           )}
 
-          <audio ref={audioRef} preload="auto" crossOrigin="anonymous" />
+          <audio ref={audioRef} preload="auto" />
         </div>
 
         <aside className="border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-4">
           <div className="border border-primary/15 rounded bg-background/30 p-3">
-            <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap select-none leading-5">
+            <pre className="text-sm text-muted-foreground whitespace-pre-wrap select-none leading-5">
               {nowPlayingText}
             </pre>
           </div>
@@ -675,7 +788,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             <div className="text-xs text-muted-foreground tracking-widest mb-2">QUEUE</div>
 
             {(eqQueue?.length ?? 0) === 0 ? (
-              <div className="text-xs text-muted-foreground tracking-widest">-- EMPTY (load tracks in MUSIC.DIR)</div>
+              <div className="text-xs text-muted-foreground tracking-widest">-- EMPTY (upload audio files above)</div>
             ) : (
               <div className="space-y-2 max-h-[22rem] overflow-auto pr-1">
                 {(eqQueue ?? []).map((t: any) => {

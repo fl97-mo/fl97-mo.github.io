@@ -41,7 +41,7 @@ function RetroToggle({
           "inset -1px -1px 2px rgba(0,0,0,0.8), inset 1px 1px 2px rgba(255,255,255,0.04)",
       }}
     >
-      <span className="text-[11px] tracking-widest text-muted-foreground whitespace-nowrap">
+      <span className="text-sm tracking-widest text-muted-foreground whitespace-nowrap">
         {label}
       </span>
 

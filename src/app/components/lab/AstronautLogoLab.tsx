@@ -326,7 +326,7 @@ export function AstronautLogoLab() {
             </button>
           </div>
 
-          <div className="mt-2 text-[10px] text-muted-foreground tracking-widest flex flex-wrap gap-x-3 gap-y-1">
+          <div className="mt-2 text-xs text-muted-foreground tracking-widest flex flex-wrap gap-x-3 gap-y-1">
             <div>
               -- PRESET: <span className="text-primary/80">{preset}</span>
             </div>
@@ -375,7 +375,7 @@ export function AstronautLogoLab() {
                     setGlow(0.55);
                     setLineWidth(1.35);
                   }}
-                  className="px-2 py-1 rounded border border-primary/20 bg-background/40 text-[10px] tracking-widest text-muted-foreground hover:border-primary/60 hover:text-primary transition-all"
+                  className="px-2 py-1 rounded border border-primary/20 bg-background/40 text-xs tracking-widest text-muted-foreground hover:border-primary/60 hover:text-primary transition-all"
                 >
                   -- QUICK RESET
                 </button>

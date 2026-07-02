@@ -27,8 +27,9 @@ Hosting / Infrastructure
 ------------------------
 This site is hosted via GitHub Pages and delivered through Cloudflare (CDN/DNS).
 
-Audio files are hosted separately on audio.fl97-mo.de (self-hosted file serving).
-When you stream or download audio, technical access data is processed to deliver the files.
+Downloadable music files are served as static website assets through the same hosting/CDN path.
+The equalizer can also load audio files selected locally in your browser; those files are not uploaded
+to this website or to a separate audio server by the EQ feature.
 See PRIVACY.DIR for details.  [*]
 
 Disclaimer (no legal advice)
@@ -85,7 +86,7 @@ Their own terms and policies apply. See PRIVACY.DIR for data protection details.
 
 Last update
 -----------
-2025-12-30
+2026-07-03
 
 [*] Note: Technical data processing by hosting/CDN providers is common for
     operating and securing websites. For details and your rights, see PRIVACY.DIR.

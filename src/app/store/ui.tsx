@@ -23,7 +23,6 @@ export type EqTrack = {
   artist?: string;
   year?: string;
   downloadUrl?: string;
-  streamUrl?: string;
 };
 
 type UIState = {
@@ -47,8 +46,6 @@ type UIState = {
   setEqFile: (id: string, file: File) => void;
 
   cycleEqRepeat: () => void;
-  requestEqPlay: (id: string) => void;
-  consumeEqPendingPlay: () => string | null;
 };
 
 const UIContext = createContext<UIState | null>(null);
@@ -57,7 +54,6 @@ const SS_SOUND = "ui.soundEnabled.session";
 const SS_EFFECTS = "ui.effectsEnabled.session";
 const SS_INTRO_DONE = "ui.introDone.session";
 
-const SS_EQ_QUEUE = "ui.eqQueue.session";
 const SS_EQ_ACTIVE = "ui.eqActiveId.session";
 const SS_EQ_REPEAT = "ui.eqRepeat.session";
 
@@ -93,90 +89,18 @@ function writeStrToSessionStorage(key: string, value: string | null) {
   } catch {}
 }
 
-function readJsonFromSessionStorage<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.sessionStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJsonToSessionStorage(key: string, value: unknown) {
-  try {
-    window.sessionStorage.setItem(key, JSON.stringify(value));
-  } catch {}
-}
-
-function isDevHost() {
-  if (typeof window === "undefined") return false;
-  const h = window.location.hostname;
-  return h === "localhost" || h === "127.0.0.1";
-}
-
-const AUDIO_BASE = isDevHost() ? "/audio/" : "https://audio.fl97-mo.de/";
-
-function streamHref(file: string) {
-  const raw = file.replace(/^\/+/, "");
-  if (raw.includes("..")) throw new Error("Invalid file path.");
-  const encoded = raw.split("/").map(encodeURIComponent).join("/");
-  return AUDIO_BASE.startsWith("/")
-    ? `${AUDIO_BASE}${encoded}`
-    : new URL(encoded, AUDIO_BASE).toString();
-}
-
-const DEFAULT_EQ_QUEUE: EqTrack[] = [
-  {
-    id: "ufo",
-    artist: "NOMKEE",
-    title: "ENTER THE UFO",
-    year: "2018",
-    streamUrl: streamHref("NOMKEE_-_Enter_the_UFO.mp3"),
-    downloadUrl: streamHref("NOMKEE_-_Enter_the_UFO.mp3"),
-  },
-  {
-    id: "iknow",
-    artist: "NOMKEE",
-    title: "I KNOW YOU BETTER",
-    year: "2020",
-    streamUrl: streamHref("NOMKEE_-_I_know_you_better.wav"),
-    downloadUrl: streamHref("NOMKEE_-_I_know_you_better.wav"),
-  },
-  {
-    id: "dontlook",
-    artist: "NOMKEE",
-    title: "DONT WANT TO LOOK AWAY",
-    year: "2020",
-    streamUrl: streamHref("NOMKEE_-_Dont_want_to_look_away.mp3"),
-    downloadUrl: streamHref("NOMKEE_-_Dont_want_to_look_away.mp3"),
-  },
-  {
-    id: "rayguns",
-    artist: "NOMKEE",
-    title: "RAYGUNS EVERYWHERE",
-    year: "2022",
-    streamUrl: streamHref("Nomkee_-_Rayguns_everywhere.wav"),
-    downloadUrl: streamHref("Nomkee_-_Rayguns_everywhere.wav"),
-  },
-];
+const DEFAULT_EQ_QUEUE: EqTrack[] = [];
 
 export function UIProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(false);
   const [effectsEnabled, setEffectsEnabledState] = useState(true);
   const [introDone, setIntroDone] = useState(false);
 
-  const [eqQueue, setEqQueueState] = useState<EqTrack[]>(() => {
-    if (typeof window === "undefined") return DEFAULT_EQ_QUEUE;
-    return readJsonFromSessionStorage<EqTrack[]>(SS_EQ_QUEUE, DEFAULT_EQ_QUEUE);
-  });
+  const [eqQueue, setEqQueueState] = useState<EqTrack[]>(DEFAULT_EQ_QUEUE);
 
   const [eqActiveId, setEqActiveIdState] = useState<string | null>(() => {
-    if (typeof window === "undefined") return DEFAULT_EQ_QUEUE[0]?.id ?? null;
-    const q = readJsonFromSessionStorage<EqTrack[]>(SS_EQ_QUEUE, DEFAULT_EQ_QUEUE);
-    const saved = readStrFromSessionStorage(SS_EQ_ACTIVE, null);
-    if (saved && q.some((t) => t.id === saved)) return saved;
-    return q[0]?.id ?? null;
+    if (typeof window === "undefined") return null;
+    return null;
   });
 
   const [eqRepeat, setEqRepeat] = useState<EqRepeat>(() => {
@@ -186,7 +110,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
   });
 
   const [eqFiles, setEqFiles] = useState<Record<string, File | undefined>>({});
-  const [eqPendingPlayId, setEqPendingPlayId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -205,11 +128,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
         .catch(() => {});
     }
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    writeJsonToSessionStorage(SS_EQ_QUEUE, eqQueue);
-  }, [eqQueue]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -253,7 +171,17 @@ export function UIProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setEqQueue = useCallback((q: EqTrack[]) => {
+    const ids = new Set(q.map((t) => t.id));
+
     setEqQueueState(q);
+    setEqFiles((prev) => {
+      const next: Record<string, File | undefined> = {};
+      for (const [id, file] of Object.entries(prev)) {
+        if (ids.has(id)) next[id] = file;
+      }
+      return next;
+    });
+
     if (!q.length) {
       setEqActiveIdState(null);
       return;
@@ -287,20 +215,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
     setEqRepeat((prev) => (prev === "OFF" ? "ALL" : prev === "ALL" ? "ONE" : "OFF"));
   }, []);
 
-  const requestEqPlay = useCallback((id: string) => {
-    setEqActiveIdState(id);
-    setEqPendingPlayId(id);
-  }, []);
-
-  const consumeEqPendingPlay = useCallback(() => {
-    let out: string | null = null;
-    setEqPendingPlayId((prev) => {
-      out = prev;
-      return null;
-    });
-    return out;
-  }, []);
-
   const value = useMemo<UIState>(
     () => ({
       soundEnabled,
@@ -320,8 +234,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
       setEqActiveId,
       setEqFile,
       cycleEqRepeat,
-      requestEqPlay,
-      consumeEqPendingPlay,
     }),
     [
       soundEnabled,
@@ -339,8 +251,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
       setEqActiveId,
       setEqFile,
       cycleEqRepeat,
-      requestEqPlay,
-      consumeEqPendingPlay,
     ]
   );
 

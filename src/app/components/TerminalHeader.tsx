@@ -37,7 +37,7 @@ export function TerminalHeader({ onIntroDone, introAlreadyDone = false }: Props)
           <pre
             className="
               text-primary
-              text-[9px] sm:text-[10px] md:text-xs lg:text-sm
+              text-xs sm:text-xs md:text-xs lg:text-sm
               leading-tight
               select-none
               whitespace-pre
@@ -78,7 +78,7 @@ export function TerminalHeader({ onIntroDone, introAlreadyDone = false }: Props)
           showCursor={false}
           className="
             text-primary
-            text-[9px] sm:text-[10px] md:text-xs lg:text-sm
+            text-xs sm:text-xs md:text-xs lg:text-sm
             leading-tight
             select-none
             whitespace-pre

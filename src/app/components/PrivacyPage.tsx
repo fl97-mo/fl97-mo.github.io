@@ -72,28 +72,14 @@ Providers’ policies (for transparency):
 - GitHub Privacy Statement (GitHub Pages is part of GitHub’s services)
 - Cloudflare Privacy Policy / Trust & GDPR resources
 
-4b) Audio hosting (audio.fl97-mo.de)
-------------------------------------
-Audio files are served from a separate domain: audio.fl97-mo.de.
-When you stream or download audio, your browser requests media files from that server.
+4b) Music downloads and local EQ uploads
+----------------------------------------
+Downloadable music files are served as static website assets through GitHub Pages / Cloudflare.
+Those requests are covered by section 4 above like any other requested page or file.
 
-Processed data (technical access data):
-- IP address
-- date and time of the request
-- requested audio file / URL
-- referrer (if transmitted by your browser)
-- user agent / device information
-
-Purpose:
-- delivering the audio content
-- ensuring stability and protecting the service from abuse
-
-Legal basis:
-- Art. 6(1)(f) GDPR (legitimate interests): reliable and secure operation
-
-Retention:
-- Server/provider logs may be stored for a limited period for security and operation.
-- If the audio service is delivered through a CDN or reverse proxy, that provider may also process logs.
+The equalizer upload feature uses your browser's local file selection and temporary object URLs.
+Selected audio files stay on your device and are not uploaded to me, GitHub, Cloudflare, or a
+separate audio server by the EQ feature.
 
 
 5) International data transfers (third countries)
@@ -150,7 +136,7 @@ I may update this privacy policy if the website changes or if legal requirements
 
 Last update
 -----------
-2025-12-30
+2026-07-03
 `}
       </pre>
     </section>

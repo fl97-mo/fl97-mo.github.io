@@ -1,5 +1,5 @@
 import * as Accordion from "@radix-ui/react-accordion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TypewriterText } from "./Typewriter";
@@ -84,8 +84,6 @@ const ITEMS: MusicItem[] = [
   },
 ];
 
-const STREAM_BASE = import.meta.env.DEV ? "/audio/" : "https://audio.fl97-mo.de/";
-
 const PUBLIC_BASE = import.meta.env.BASE_URL || "/";
 
 function assetHref(base: string, file: string) {
@@ -102,30 +100,16 @@ function assetHref(base: string, file: string) {
   return new URL(encoded, base).toString();
 }
 
-function streamHref(file: string) {
-  return assetHref(STREAM_BASE, file);
-}
-
 function downloadHref(file: string) {
   return assetHref(PUBLIC_BASE, file);
-}
-
-function splitArtistTitle(name: string) {
-  const parts = name.split(" - ");
-  if (parts.length >= 2) {
-    return { artist: parts[0].trim(), title: parts.slice(1).join(" - ").trim() };
-  }
-  return { artist: undefined, title: name.trim() };
 }
 
 function MusicItemRow({
   item,
   isOpen,
-  onPlay,
 }: {
   item: MusicItem;
   isOpen: boolean;
-  onPlay: () => void;
 }) {
   const downloadFile = item.publicFile ?? item.file;
 
@@ -167,7 +151,7 @@ function MusicItemRow({
               {item.tags.map((t) => (
                 <span
                   key={t}
-                  className="px-2 py-1 text-[10px] tracking-widest border border-primary/25 rounded bg-background/40 text-muted-foreground"
+                  className="px-2 py-1 text-xs tracking-widest border border-primary/25 rounded bg-background/40 text-muted-foreground"
                 >
                   {t}
                 </span>
@@ -175,49 +159,27 @@ function MusicItemRow({
             </div>
           )}
 
-          {item.file && (
+          {downloadFile && (
             <div className="pt-3 border-t border-primary/15 flex items-center justify-between gap-3">
-              <div className="text-[10px] text-muted-foreground tracking-widest truncate">
-                <span className="text-primary">{"-- STREAM:"}</span> {item.file}
-                {item.publicFile && (
-                  <>
-                    {"  "}
-                    <span className="text-primary">{"-- DL:"}</span> {item.publicFile}
-                  </>
-                )}
+              <div className="text-xs text-muted-foreground tracking-widest truncate">
+                <span className="text-primary">{"-- DOWNLOAD:"}</span> {downloadFile}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => {
-                    void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
-                    onPlay();
-                  }}
-                  className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all text-xs tracking-widest"
+                <a
+                  href={downloadHref(downloadFile)}
+                  download={downloadFile}
+                  className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
                   style={{
                     boxShadow:
-                      "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
+                      "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                  }}
+                  onClick={() => {
+                    void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
                   }}
                 >
-                  PLAY
-                </button>
-
-                {downloadFile && (
-                  <a
-                    href={downloadHref(downloadFile)}
-                    download={downloadFile}
-                    className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
-                    style={{
-                      boxShadow:
-                        "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
-                    }}
-                    onClick={() => {
-                      void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
-                    }}
-                  >
-                    DOWNLOAD
-                  </a>
-                )}
+                  DOWNLOAD
+                </a>
               </div>
             </div>
           )}
@@ -232,7 +194,7 @@ function MusicItemRow({
 }
 
 export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
-  const { soundEnabled, setEqQueue, requestEqPlay } = useUI();
+  const { soundEnabled } = useUI();
 
   const [open, setOpen] = useState<string[]>([]);
   const openRef = useRef<string[]>([]);
@@ -258,27 +220,8 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
 
   const openSet = useMemo(() => new Set(open), [open]);
 
-  const eqTracks = useMemo(() => {
-    return ITEMS.filter((i) => !!i.file).map((i) => {
-      const { artist, title } = splitArtistTitle(i.name);
-      const streamUrl = streamHref(i.file!);
-      const downloadFile = i.publicFile ?? i.file!;
-      const dlUrl = downloadHref(downloadFile);
-
-      return {
-        id: i.id,
-        artist,
-        title,
-        year: i.year ? String(i.year) : undefined,
-        streamUrl,
-        downloadUrl: dlUrl,
-      };
-    });
-  }, []);
-
-  const doPlay = (id: string) => {
-    setEqQueue(eqTracks);
-    requestEqPlay(id);
+  const openEqualizer = () => {
+    if (soundEnabled) void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
     onOpenEQ();
   };
 
@@ -295,10 +238,25 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
         I produce music under the alias: <span className="text-primary">NOMKEE</span>.
       </p>
 
-      <p className="text-muted-foreground mb-6 text-sm">
-        <span className="text-primary">{">"}</span>{" "}
-        Tracks are streamed. Press PLAY to open the song in EQUALIZER.DIR.
-      </p>
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <p className="text-muted-foreground text-sm">
+          <span className="text-primary">{">"}</span>{" "}
+          The EQ now uses your local audio files. Open EQUALIZER.DIR and upload music there.
+        </p>
+
+        <button
+          type="button"
+          onClick={openEqualizer}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all"
+          style={{
+            boxShadow:
+              "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
+          }}
+        >
+          <Upload className="w-4 h-4" />
+          <span>OPEN EQ UPLOAD</span>
+        </button>
+      </div>
 
       <Accordion.Root type="multiple" value={open} onValueChange={handleChange} className="space-y-4">
         {ITEMS.map((item) => (
@@ -306,7 +264,6 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
             key={item.id}
             item={item}
             isOpen={openSet.has(item.id)}
-            onPlay={() => doPlay(item.id)}
           />
         ))}
       </Accordion.Root>

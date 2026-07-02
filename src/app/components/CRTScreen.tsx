@@ -30,8 +30,8 @@ export function CRTScreen({ children }: CRTScreenProps) {
         </>
       )}
 
-      <div className="relative z-10 min-h-screen p-4 md:p-8">
-        <div className="max-w-5xl mx-auto bg-background/80 border-2 border-primary/40 rounded-lg p-6 md:p-12 shadow-[0_0_50px_rgba(0,255,65,0.3)]">
+      <div className="relative z-10 min-h-screen p-3 sm:p-4 md:p-6 xl:p-8">
+        <div className="w-full max-w-[1800px] mx-auto bg-background/80 border-2 border-primary/40 rounded-lg p-4 sm:p-6 lg:p-8 xl:p-10 shadow-[0_0_50px_rgba(0,255,65,0.3)]">
           {children}
         </div>
       </div>

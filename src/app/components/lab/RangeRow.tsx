@@ -23,10 +23,10 @@ export function RangeRow({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-[11px] text-muted-foreground tracking-widest truncate">
+        <div className="text-sm text-muted-foreground tracking-widest truncate">
           {label}
         </div>
-        <div className="text-[11px] text-primary/80 tabular-nums tracking-widest">
+        <div className="text-sm text-primary/80 tabular-nums tracking-widest">
           {valueStr}
         </div>
       </div>
