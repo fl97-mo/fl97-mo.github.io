@@ -169,10 +169,10 @@ function MusicItemRow({
                 <a
                   href={downloadHref(downloadFile)}
                   download={downloadFile}
-                  className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
+                  className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all text-xs tracking-widest"
                   style={{
                     boxShadow:
-                      "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                      "inset -2px -2px 0px var(--crt-inset-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
                   }}
                   onClick={() => {
                     void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
@@ -226,7 +226,7 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
   };
 
   return (
-    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded crt-glow-soft">
       <h2 className="text-primary mb-4 flex items-center gap-2">
         <span className="text-muted-foreground">[</span>
         <TypewriterText text="MUSIC.DIR" speedMs={18} showCursor={false} />
@@ -247,10 +247,10 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
         <button
           type="button"
           onClick={openEqualizer}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
           style={{
             boxShadow:
-              "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
+              "inset -2px -2px 0px var(--crt-inset-button), inset 2px 2px 0px rgba(0,0,0,0.55)",
           }}
         >
           <Upload className="w-4 h-4" />

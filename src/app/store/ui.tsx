@@ -28,10 +28,12 @@ export type EqTrack = {
 type UIState = {
   soundEnabled: boolean;
   effectsEnabled: boolean;
+  accessibilityEnabled: boolean;
   introDone: boolean;
 
   setSoundEnabled: (v: boolean) => void;
   setEffectsEnabled: (v: boolean) => void;
+  setAccessibilityEnabled: (v: boolean) => void;
 
   markIntroDone: () => void;
   resetIntroForSession: () => void;
@@ -52,6 +54,7 @@ const UIContext = createContext<UIState | null>(null);
 
 const SS_SOUND = "ui.soundEnabled.session";
 const SS_EFFECTS = "ui.effectsEnabled.session";
+const SS_ACCESSIBILITY = "ui.accessibilityEnabled.session";
 const SS_INTRO_DONE = "ui.introDone.session";
 
 const SS_EQ_ACTIVE = "ui.eqActiveId.session";
@@ -94,6 +97,7 @@ const DEFAULT_EQ_QUEUE: EqTrack[] = [];
 export function UIProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(false);
   const [effectsEnabled, setEffectsEnabledState] = useState(true);
+  const [accessibilityEnabled, setAccessibilityEnabledState] = useState(false);
   const [introDone, setIntroDone] = useState(false);
 
   const [eqQueue, setEqQueueState] = useState<EqTrack[]>(DEFAULT_EQ_QUEUE);
@@ -116,10 +120,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
     const se = readBoolFromSessionStorage(SS_SOUND, false);
     const ee = readBoolFromSessionStorage(SS_EFFECTS, true);
+    const ae = readBoolFromSessionStorage(SS_ACCESSIBILITY, false);
     const id = readBoolFromSessionStorage(SS_INTRO_DONE, false);
 
     setSoundEnabledState(se);
     setEffectsEnabledState(ee);
+    setAccessibilityEnabledState(ae);
     setIntroDone(id);
 
     if (se) {
@@ -158,6 +164,11 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const setEffectsEnabled = useCallback((v: boolean) => {
     setEffectsEnabledState(v);
     writeBoolToSessionStorage(SS_EFFECTS, v);
+  }, []);
+
+  const setAccessibilityEnabled = useCallback((v: boolean) => {
+    setAccessibilityEnabledState(v);
+    writeBoolToSessionStorage(SS_ACCESSIBILITY, v);
   }, []);
 
   const markIntroDone = useCallback(() => {
@@ -215,13 +226,20 @@ export function UIProvider({ children }: { children: ReactNode }) {
     setEqRepeat((prev) => (prev === "OFF" ? "ALL" : prev === "ALL" ? "ONE" : "OFF"));
   }, []);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset.accessibility = accessibilityEnabled ? "on" : "off";
+  }, [accessibilityEnabled]);
+
   const value = useMemo<UIState>(
     () => ({
       soundEnabled,
       effectsEnabled,
+      accessibilityEnabled,
       introDone,
       setSoundEnabled,
       setEffectsEnabled,
+      setAccessibilityEnabled,
       markIntroDone,
       resetIntroForSession,
 
@@ -238,9 +256,11 @@ export function UIProvider({ children }: { children: ReactNode }) {
     [
       soundEnabled,
       effectsEnabled,
+      accessibilityEnabled,
       introDone,
       setSoundEnabled,
       setEffectsEnabled,
+      setAccessibilityEnabled,
       markIntroDone,
       resetIntroForSession,
       eqQueue,

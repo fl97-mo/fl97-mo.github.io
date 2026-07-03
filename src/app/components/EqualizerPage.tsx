@@ -587,7 +587,7 @@ useEffect(() => {
   }, [activeTrack, loadedLabel, sourceKind, eqQueue, activeIndex, eqRepeat]);
 
   return (
-    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded crt-glow-soft">
       <h2 className="text-primary mb-4 flex items-center gap-2">
         <span className="text-muted-foreground">[</span>
         <TypewriterText text="EQUALIZER.DIR" speedMs={18} showCursor={false} />
@@ -613,10 +613,10 @@ useEffect(() => {
           <button
             type="button"
             onClick={() => uploadInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
             style={{
               boxShadow:
-                "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
+                "inset -2px -2px 0px var(--crt-inset-button), inset 2px 2px 0px rgba(0,0,0,0.55)",
             }}
           >
             <Upload className="w-4 h-4" />
@@ -630,7 +630,7 @@ useEffect(() => {
               className="inline-flex items-center gap-2 px-5 py-2 border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all"
               style={{
                 boxShadow:
-                  "inset -2px -2px 0px rgba(0,255,65,0.14), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                  "inset -2px -2px 0px var(--crt-focus-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
               }}
             >
               <Trash2 className="w-4 h-4" />
@@ -723,10 +723,10 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               onClick={() => togglePlay()}
-              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)] transition-all"
+              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
               style={{
                 boxShadow:
-                  "inset -2px -2px 0px rgba(0,255,65,0.25), inset 2px 2px 0px rgba(0,0,0,0.55)",
+                  "inset -2px -2px 0px var(--crt-inset-button), inset 2px 2px 0px rgba(0,0,0,0.55)",
               }}
             >
               {isPlaying ? "PAUSE" : "PLAY"}
@@ -734,10 +734,10 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
             <button
               onClick={() => goDelta(-1, true)}
-              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all"
+              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
-                  "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                  "inset -2px -2px 0px var(--crt-inset-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
               }}
               disabled={(eqQueue?.length ?? 0) < 2}
             >
@@ -746,10 +746,10 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
             <button
               onClick={() => goDelta(1, true)}
-              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all"
+              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
-                  "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                  "inset -2px -2px 0px var(--crt-inset-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
               }}
               disabled={(eqQueue?.length ?? 0) < 2}
             >
@@ -758,10 +758,10 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
             <button
               onClick={() => cycleEqRepeat()}
-              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all"
+              className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
-                  "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                  "inset -2px -2px 0px var(--crt-inset-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
               }}
             >
               REPEAT: {eqRepeat}
@@ -803,7 +803,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
                       }}
                       className={`w-full text-left px-3 py-2 rounded border transition-all ${
                         active
-                          ? "border-primary bg-primary/15 text-primary shadow-[0_0_10px_rgba(0,255,65,0.25)]"
+                          ? "border-primary bg-primary/15 text-primary crt-glow-selected"
                           : "border-primary/20 bg-background/40 text-muted-foreground hover:border-primary/60 hover:text-primary"
                       }`}
                     >

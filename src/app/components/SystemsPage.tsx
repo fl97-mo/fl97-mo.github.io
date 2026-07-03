@@ -786,7 +786,7 @@ const handlePostsChange = (next: string[]) => {
   }, [initialOpenSlug, onConsumedInitialOpen, shouldScroll]);
 
   return (
-    <section className="mb-12 border border-primary/30 p-4 sm:p-6 bg-card/50 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+    <section className="mb-12 border border-primary/30 p-4 sm:p-6 bg-card/50 rounded crt-glow-soft">
       <h2 className="text-primary mb-4 flex items-center gap-2">
         <span className="text-muted-foreground">[</span>
         <TypewriterText text="SYSTEMS.DIR" speedMs={18} showCursor={false} />

@@ -13,7 +13,10 @@ export function CRTScreen({ children }: CRTScreenProps) {
       {effectsEnabled && (
         <>
           <div className="pointer-events-none fixed inset-0 z-50 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15)_1px,transparent_1px,transparent_2px)]" />
-          <div className="pointer-events-none fixed inset-0 z-40 shadow-[inset_0_0_100px_rgba(0,255,65,0.06)]" />
+          <div
+            className="pointer-events-none fixed inset-0 z-40"
+            style={{ boxShadow: "inset 0 0 100px var(--crt-screen-glow)" }}
+          />
           <div className="pointer-events-none fixed inset-0 z-30 bg-primary/3 animate-[flicker_1.8s_infinite]" />
 
           <style>{`
@@ -31,7 +34,7 @@ export function CRTScreen({ children }: CRTScreenProps) {
       )}
 
       <div className="relative z-10 min-h-screen p-3 sm:p-4 md:p-6 xl:p-8">
-        <div className="w-full max-w-[1800px] mx-auto bg-background/80 border-2 border-primary/40 rounded-lg p-4 sm:p-6 lg:p-8 xl:p-10 shadow-[0_0_50px_rgba(0,255,65,0.3)]">
+        <div className="w-full max-w-[1800px] mx-auto bg-background/80 border-2 border-primary/40 rounded-lg p-4 sm:p-6 lg:p-8 xl:p-10 crt-glow-panel">
           {children}
         </div>
       </div>

@@ -16,26 +16,31 @@ export type TabId =
 
 function RetroToggle({
   label,
+  title,
   value,
   onChange,
 }: {
   label: string;
+  title?: string;
   value: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const accessibleLabel = title ?? label;
+
   return (
     <button
       type="button"
-      aria-label={label}
-      title={label}
+      aria-label={accessibleLabel}
+      aria-pressed={value}
+      title={accessibleLabel}
       onClick={() => onChange(!value)}
       className={`
         inline-flex h-11
-        items-center gap-3
+        items-center justify-between gap-3
         px-3 rounded border
         transition-all duration-150
-        bg-[#0b120b]
-        border-[#1f3a1f]
+        bg-[var(--crt-toggle-shell)]
+        border-[var(--crt-toggle-border)]
       `}
       style={{
         boxShadow:
@@ -47,7 +52,7 @@ function RetroToggle({
       </span>
 
       <div className="flex items-center gap-2">
-        <span className="relative w-9 h-5 rounded-sm border border-[#2a3d2a] bg-[#050805] px-0.5">
+        <span className="relative w-9 h-5 rounded-sm border border-[var(--crt-toggle-track-border)] bg-[var(--crt-toggle-track)] px-0.5">
           <span
             className={`
               absolute top-0.5 left-0.5
@@ -68,14 +73,17 @@ function RetroToggle({
         <span
           className={`
             w-2 h-2 rounded-full
-            border border-[#1f3a1f]
+            border border-[var(--crt-toggle-border)]
             transition-all duration-150
             ${
               value
-                ? "bg-primary shadow-[0_0_6px_rgba(0,255,65,0.9)]"
-                : "bg-[#0e1a0e]"
+                ? "bg-primary"
+                : "bg-[var(--crt-toggle-off)]"
             }
           `}
+          style={{
+            boxShadow: value ? "0 0 6px var(--crt-glow-active)" : undefined,
+          }}
         />
       </div>
     </button>
@@ -95,7 +103,14 @@ export function RetroNavigation({
   terminalButtonRef?: RefObject<HTMLButtonElement | null>;
   terminalOpen?: boolean;
 }) {
-  const { soundEnabled, setSoundEnabled, effectsEnabled, setEffectsEnabled } = useUI();
+  const {
+    soundEnabled,
+    setSoundEnabled,
+    effectsEnabled,
+    setEffectsEnabled,
+    accessibilityEnabled,
+    setAccessibilityEnabled,
+  } = useUI();
 
   const navItems: { id: TabId; label: string; icon: LucideIcon }[] = [
     { id: "home", label: "HOME", icon: Home },
@@ -119,7 +134,7 @@ export function RetroNavigation({
 
   return (
     <div className="mb-8">
-      <nav className="border-2 border-primary/40 bg-card/50 p-2 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+      <nav className="border-2 border-primary/40 bg-card/50 p-2 rounded crt-glow-soft">
         <div className="grid gap-2 md:gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="grid gap-2 grid-cols-[auto_repeat(2,minmax(0,1fr))] sm:grid-cols-[auto_repeat(3,minmax(0,1fr))] xl:grid-cols-[auto_repeat(6,minmax(0,1fr))]">
             <button
@@ -135,15 +150,10 @@ export function RetroNavigation({
                 border-2 transition-all duration-100
                 ${
                   terminalOpen
-                    ? "border-primary bg-primary text-background shadow-[0_0_15px_rgba(0,255,65,0.6)]"
-                    : "border-primary/50 bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)]"
+                    ? "border-primary bg-primary text-background crt-glow-active crt-inset-active"
+                    : "border-primary/50 bg-background/50 text-primary hover:border-primary crt-hover-glow crt-inset-idle"
                 }
               `}
-              style={{
-                boxShadow: terminalOpen
-                  ? "inset -2px -2px 0px rgba(0,0,0,0.5), inset 2px 2px 0px rgba(0,255,65,0.3)"
-                  : "inset -2px -2px 0px rgba(0,255,65,0.3), inset 2px 2px 0px rgba(0,0,0,0.5)",
-              }}
             >
               <Terminal className="h-5 w-5 shrink-0" />
             </button>
@@ -164,15 +174,10 @@ export function RetroNavigation({
                     border-2 transition-all duration-100
                     ${
                       isActive
-                        ? "border-primary bg-primary text-background shadow-[0_0_15px_rgba(0,255,65,0.6)]"
-                        : "border-primary/50 bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)]"
+                        ? "border-primary bg-primary text-background crt-glow-active crt-inset-active"
+                        : "border-primary/50 bg-background/50 text-primary hover:border-primary crt-hover-glow crt-inset-idle"
                     }
                   `}
-                  style={{
-                    boxShadow: isActive
-                      ? "inset -2px -2px 0px rgba(0,0,0,0.5), inset 2px 2px 0px rgba(0,255,65,0.3)"
-                      : "inset -2px -2px 0px rgba(0,255,65,0.3), inset 2px 2px 0px rgba(0,0,0,0.5)",
-                  }}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
                   <span className="whitespace-nowrap">{item.label}</span>
@@ -181,7 +186,7 @@ export function RetroNavigation({
             })}
           </div>
 
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
             <RetroToggle
               label="SOUND"
               value={soundEnabled}
@@ -201,6 +206,16 @@ export function RetroNavigation({
               onChange={(v) => {
                 if (soundEnabled) playSound("BUTTON", 0.95);
                 setEffectsEnabled(v);
+              }}
+            />
+
+            <RetroToggle
+              label="A11Y"
+              title="Accessibility high contrast"
+              value={accessibilityEnabled}
+              onChange={(v) => {
+                if (soundEnabled) playSound("BUTTON", 0.95);
+                setAccessibilityEnabled(v);
               }}
             />
           </div>

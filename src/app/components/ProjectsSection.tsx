@@ -49,7 +49,7 @@ export function ProjectsSection({ onOpenSystems }: ProjectsSectionProps) {
   ];
 
   return (
-    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded crt-glow-soft">
       <h2 className="text-primary mb-4 flex items-center gap-2">
         <span className="text-muted-foreground">{"["}</span>
         PROJECTS.DIR
@@ -85,7 +85,7 @@ export function ProjectsSection({ onOpenSystems }: ProjectsSectionProps) {
             onBlur={stopHoverNoise}
             className="
               w-full text-left border border-primary/20 p-4 bg-background/50 rounded
-              hover:border-primary/50 hover:shadow-[0_0_14px_rgba(0,255,65,0.35)]
+              hover:border-primary/50 crt-hover-card
               transition-all duration-150
               focus:outline-none focus:ring-2 focus:ring-primary/40
             "

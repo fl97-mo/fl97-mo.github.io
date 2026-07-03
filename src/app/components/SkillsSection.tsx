@@ -45,7 +45,7 @@ export function SkillsSection() {
   const wikiUrl = (label: string) => `https://en.wikipedia.org/wiki/${wikiMap[label] ?? encodeURIComponent(label)}`;
 
   return (
-    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded crt-glow-soft">
       <h2 className="text-primary mb-4 flex items-center gap-2">
         <span className="text-muted-foreground">{'['}</span>
         STACK.DAT
