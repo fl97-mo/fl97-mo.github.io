@@ -117,91 +117,158 @@ const SYSTEMS_POSTS: SystemsPost[] = [
   // 1) ETL
   {
     slug: "manual-to-framework",
-    title: "Shifting from spreadsheet data workflows into systems",
-    tags: ["NOTE", "ETL-THINKING", "AUTOMATION"],
+    title: "How I started sketching a small report framework",
+    tags: ["ETL", "REPORT_JOBS", "FRAMEWORK", "VALIDATION", "LOGGING", "THREADING"],
     summary: [
-      "Observations from spreadsheet-heavy, manual workflows",
-      "Why automating single steps often adds complexity",
-      "Notes on layered thinking instead of step-by-step scripts",
-      "Why structure matters more than tools",
+      "A practical idea for repeated reports that start with exports, Excel files, CSVs, or database results",
+      "The reports enter the system as jobs instead of being handled by separate one-off scripts",
+      "A central controller decides what runs and sends each job through the same structure",
+      "Standard methods handle loading, processing, validation, logging, and exporting",
+      "The point is reuse: new reports should plug into the framework with their own config",
+      "Threading could later allow independent report jobs to run at the same time",
     ],
     typedIntro: [
-      "> These are personal notes on how messy, manual workflows tend to grow over time,",
-      "> and how thinking in terms of systems can make them easier to reason about.",
-      "> This is not a tutorial or a framework description,",
-      "> but a written reflection based on practical observations.",
+      "> This started as a normal Excel and ETL automation idea.",
+      "> After thinking about it longer, it became more of a small report framework.",
+      "> The reports are treated like jobs.",
+      "> A central controller loads the right config and pushes each job through the same layers.",
+      "> Loading, processing, validation, logging, and export should be reusable methods.",
+      "> That way a new report does not need its own messy script from scratch.",
     ],
     sections: [
       {
         id: "s1",
-        title: "1. Where this usually starts",
+        title: "1. Where the idea came from",
         text:
-          "In many situations, work grows around whatever tools are already available. Queries are copied, spreadsheets grow, small fixes pile up, and the process slowly becomes harder to reason about.",
+          "The starting point is normal data work. A report begins with an export from a system, an Excel file, a CSV, or a database result. Then someone opens the file, cleans columns, removes rows, adds lookups, fixes small format issues, and creates a final report. That works for one report. It gets annoying when the same type of work appears again with another file, another mapping table, or another output format.",
       },
       {
         id: "s2",
-        title: "2. Why this slowly breaks down",
+        title: "2. The part that becomes messy",
         text:
-          "Logic ends up scattered across query tools, spreadsheet formulas, and personal knowledge. Small changes become expensive, failures are hard to trace, and results are difficult to reproduce.",
+          "The messy part is usually not one single step. It is the amount of small assumptions around the report. One file needs a special column name. Another file has a different date format. One report needs a status mapping. Another one needs a duplicate check. If every report gets its own script or its own Excel workaround, the same logic slowly gets copied into many places.",
       },
       {
         id: "s3",
-        title: "3. The obvious first reaction",
+        title: "3. Why I would not build just another script",
         text:
-          "A common first reaction is to automate individual steps with scripts. While this reduces manual effort, it often introduces new complexity and hidden dependencies.",
+          "A single script can solve one report. That is useful, but it can also become the next problem. If each script loads files differently, checks errors differently, writes logs differently, and exports files differently, the automation is still hard to maintain. I wanted the common parts to live in one structure instead of being rewritten for every report.",
       },
       {
         id: "s4",
-        title: "4. A useful mental shift",
+        title: "4. The framework idea",
         text:
-          "The key shift is to stop thinking in terms of steps and start thinking in terms of data states.",
+          "The idea is to build a small framework around repeated report work. The framework provides standard methods for things that happen again and again: loading files, checking required columns, cleaning values, joining mapping tables, writing logs, and exporting results. A report should mainly describe what it needs. The framework should handle how the standard process works.",
       },
       {
         id: "s5",
-        title: "5. Layered architecture as a thinking tool",
+        title: "5. Report jobs instead of random scripts",
         text:
-          "Layered architectures separate responsibilities and make failures local instead of systemic.",
+          "In this model, a report is a job. A job has a name, input sources, expected columns, optional mappings, validation rules, and an output target. The controller reads this information from a config and starts the job. This makes the report easier to describe. It is no longer just a file plus a few manual steps. It becomes something the system can process in a predictable way.",
       },
       {
         id: "s6",
-        title: "6.  A simple ETL-style mental model",
+        title: "6. The central controller",
+        text:
+          "The controller is the part that keeps the overview. It does not do all data work itself. It loads the report config, places the job into the queue, starts the processing layer, receives validation results, writes the run status, and sends the final data to the export step. This keeps the automation centrally controlled without putting every detail into one giant function.",
+      },
+      {
+        id: "s7",
+        title: "7. Queue idea",
+        text:
+          "I imagine the report jobs moving through a queue. New jobs are loaded into the system and pushed forward one by one. The image in my head is a feed mechanism: the next prepared job moves into the processing layer, then the next one follows. This makes the flow easier to understand than a folder full of unrelated scripts.",
+      },
+      {
+        id: "s8",
+        title: "8. Architecture sketch",
         render: () => (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
+{`> REPORT_FRAMEWORK
+
+[ REPORT JOBS ]
+  -- machine report
+  -- cost overview
+  -- dashboard export
+  -- monthly status file
+        |
+        v
+[ JOB QUEUE ]
+  -- jobs wait in a controlled order
+  -- each job points to its config
+        |
+        v
+[ CENTRAL CONTROLLER ]
+  -- loads config
+  -- starts job
+  -- sends job through framework methods
+  -- collects status, warnings, and errors
+        |
+        v
+[ PROCESSING LAYER ]
+  -- load input
+  -- clean data
+  -- map values
+  -- join tables
+  -- prepare report table
+        |
+        v
+[ VALIDATION + LOGGING ]
+  -- required columns
+  -- duplicates
+  -- missing values
+  -- failed lookups
+  -- row counts
+        |
+        v
+[ OUTPUT ]
+  -- Excel file
+  -- CSV file
+  -- dashboard table
+  -- run log`}
+          </pre>
+        ),
+      },
+      {
+        id: "s9",
+        title: "9. Standard methods",
+        render: () => (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             {[
               {
-                title: "Extract",
+                title: "Reusable methods",
                 items: [
-                  "DB / APIs / Files",
-                  "Config-driven sources",
-                  "Deterministic input state",
+                  "load input files",
+                  "normalize column names",
+                  "check required columns",
+                  "clean dates and numbers",
+                  "join lookup tables",
+                  "write output files",
+                  "create run logs",
                 ],
               },
               {
-                title: "Transform",
+                title: "Report config",
                 items: [
-                  "Validation boundaries",
-                  "Code-based processing",
-                  "Explicit schemas",
-                  "Logging & error isolation",
+                  "report name",
+                  "input source",
+                  "expected columns",
+                  "mapping files",
+                  "validation rules",
+                  "output format",
+                  "output path",
                 ],
-              },
-              {
-                title: "Load",
-                items: ["Versioned outputs", "Power BI / CSV / Excel", "Reproducible reports"],
               },
             ].map((block) => (
               <div
                 key={block.title}
                 className="border border-primary/20 bg-background/40 rounded p-3 sm:p-4"
               >
-                <div className="text-primary mb-2">
-                  {"> "} {block.title}
-                </div>
+                <div className="text-primary mb-2">{"> "} {block.title}</div>
                 <ul className="space-y-1 text-sm text-muted-foreground">
-                  {block.items.map((i) => (
-                    <li key={i} className="flex gap-2">
+                  {block.items.map((item) => (
+                    <li key={item} className="flex gap-2">
                       <span className="text-primary">--</span>
-                      <span>{i}</span>
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -211,19 +278,65 @@ const SYSTEMS_POSTS: SystemsPost[] = [
         ),
       },
       {
-        id: "s7",
-        title: "7. Manual habits vs structured thinking",
+        id: "s10",
+        title: "10. Processing layer",
+        text:
+          "The processing layer does the actual data work. It reads the input, renames columns, fixes formats, removes rows that are clearly not needed, applies mapping tables, and creates the report table. I would keep this layer focused. It should not decide which job runs next, and it should not hide problems. It receives data and config, then returns a processed result.",
+      },
+      {
+        id: "s11",
+        title: "11. Validation layer",
+        text:
+          "Validation should be separate from processing. A report can look finished and still be wrong. The validation layer checks the parts that usually cause trouble: missing columns, empty IDs, duplicate keys, unreadable dates, failed lookups, strange status values, and row counts that do not make sense. If something looks risky, the job should finish with warnings or stop with an error.",
+      },
+      {
+        id: "s12",
+        title: "12. Logging layer",
+        text:
+          "Logging is the part that makes the run understandable later. A small log is enough at the beginning. It should show which job ran, which file was loaded, how many rows came in, which warnings appeared, and where the output was saved. Without this, the framework becomes a black box. With it, debugging starts from facts instead of guessing.",
+      },
+      {
+        id: "s13",
+        title: "13. Example run log",
+        render: () => (
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
+{`> RUN_LOG
+
+-- job: machine_report
+-- config: config/machine_report.json
+-- input: input_raw/machine_export.xlsx
+-- rows loaded: 2841
+-- required columns: ok
+-- duplicate machine IDs: 2
+-- missing status values: 9
+-- unmatched lookup rows: 17
+-- validation: warnings
+-- output: output/machine_report_clean.xlsx
+-- status: finished_with_warnings`}
+          </pre>
+        ),
+      },
+      {
+        id: "s14",
+        title: "14. Why this is a framework",
+        text:
+          "The framework part starts when the same methods can be used by many reports. One report may use an Excel export, another one may use a CSV, and another one may later use a database query. The loading method, validation method, logging method, and export method still follow the same pattern. A new report does not rebuild the whole process. It plugs into the existing structure.",
+      },
+      {
+        id: "s15",
+        title: "15. Difference to a one-off script",
         render: () => (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             <div className="border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
-              <div className="text-primary mb-3">{"> "} Manual process</div>
+              <div className="text-primary mb-3">{"> "} One-off script</div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {[
-                  "Same report, different scripts",
-                  "Logic in people, documentation decentralised",
-                  "Manual steps, more errors.",
-                  "No validations or logging",
-                  "Hard to scale",
+                  "built for one report",
+                  "own loading logic",
+                  "own error handling",
+                  "own export code",
+                  "harder to compare with other reports",
+                  "often grows through quick fixes",
                 ].map((item) => (
                   <li key={item} className="flex gap-2">
                     <span className="text-primary">--</span>
@@ -234,14 +347,15 @@ const SYSTEMS_POSTS: SystemsPost[] = [
             </div>
 
             <div className="border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
-              <div className="text-primary mb-3">{"> "} System framework</div>
+              <div className="text-primary mb-3">{"> "} Framework approach</div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {[
-                  "Central entrypoint",
-                  "Logic in structure",
-                  "Reproducible outputs",
-                  "Validation boundaries",
-                  "Config-driven scaling",
+                  "same structure for many reports",
+                  "shared loading methods",
+                  "shared validation rules",
+                  "shared logging format",
+                  "report details live in config",
+                  "new reports reuse existing parts",
                 ].map((item) => (
                   <li key={item} className="flex gap-2">
                     <span className="text-primary">++</span>
@@ -254,16 +368,162 @@ const SYSTEMS_POSTS: SystemsPost[] = [
         ),
       },
       {
-        id: "s8",
-        title: "8. When patterns start repeating",
-        text:
-          "Once patterns repeat, they should be captured as utilities instead of copied logic.",
+        id: "s16",
+        title: "16. How a report would run",
+        render: () => (
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
+{`> REPORT_JOB_FLOW
+
+report: machine_report
+
+1. controller receives job
+2. controller loads report config
+3. framework loads defined input files
+4. processing layer creates working table
+5. validation layer checks the result
+6. logging layer writes warnings and status
+7. export method writes final report
+
+The report defines the task.
+The framework provides the mechanism.`}
+          </pre>
+        ),
       },
       {
-        id: "s9",
-        title: "9. Open-ended thoughts",
+        id: "s17",
+        title: "17. What belongs in config",
         text:
-          "With a stable mental model, systems can evolve without breaking the core design.",
+          "The config should hold things that change from report to report. That includes input paths, expected columns, sheet names, mapping files, filters, validation rules, and output names. This keeps the code cleaner. The framework methods stay general, while the config describes the specific report.",
+      },
+      {
+        id: "s18",
+        title: "18. Example config idea",
+        render: () => (
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
+{`> MACHINE_REPORT_CONFIG
+
+report_name: machine_report
+
+input:
+  file: input_raw/machine_export.xlsx
+  sheet: Export
+
+required_columns:
+  -- machine_id
+  -- location
+  -- status
+  -- material_number
+
+mappings:
+  status_map: config/status_values.csv
+  material_map: config/material_lookup.csv
+
+validation:
+  -- machine_id must not be empty
+  -- machine_id should be unique
+  -- status must exist in status_map
+  -- material_number should match material_map
+
+output:
+  file: output/machine_report_clean.xlsx
+  format: excel`}
+          </pre>
+        ),
+      },
+      {
+        id: "s19",
+        title: "19. Folder structure",
+        render: () => (
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
+{`> PROJECT_LAYOUT
+
+/report-framework
+  /input_raw
+    -- original exports
+
+  /config
+    -- report configs
+    -- column mappings
+    -- lookup tables
+
+  /framework
+    -- controller
+    -- queue
+    -- loaders
+    -- processors
+    -- validators
+    -- loggers
+    -- exporters
+
+  /output
+    -- generated reports
+
+  /logs
+    -- run logs
+    -- validation warnings`}
+          </pre>
+        ),
+      },
+      {
+        id: "s20",
+        title: "20. Threading as a later step",
+        text:
+          "Threading would make sense after the single-job version works. Some reports can run at the same time because they read different inputs and write different outputs. Other reports need to wait because they use the same file or depend on a previous result. The controller would need to decide which jobs are safe to run in parallel.",
+      },
+      {
+        id: "s21",
+        title: "21. Threading sketch",
+        render: () => (
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap border border-primary/20 bg-background/40 rounded p-3 sm:p-4">
+{`> THREADING_IDEA
+
+[ JOB QUEUE ]
+  -- report_A
+  -- report_B
+  -- report_C
+        |
+        v
+[ CONTROLLER ]
+  -- checks job rules
+  -- starts safe jobs in parallel
+  -- keeps dependent jobs waiting
+        |
+        v
+[ WORKERS ]
+  -- worker_01: report_A
+  -- worker_02: report_B
+  -- worker_03: waiting
+        |
+        v
+[ SHARED STATUS ]
+  -- each job writes its own log
+  -- controller keeps the overview`}
+          </pre>
+        ),
+      },
+      {
+        id: "s22",
+        title: "22. What needs care with threading",
+        text:
+          "Parallel jobs can create new problems. Two jobs should not overwrite the same output file. Logs need job IDs so they do not mix together. Shared lookup files should be read safely. If a report depends on another report, the controller has to know the order. So threading is useful, but it should be added carefully. Otherwise the framework becomes harder to understand than the manual workflow it was meant to replace.",
+      },
+      {
+        id: "s23",
+        title: "23. What I would build first",
+        text:
+          "I would start with one report job and keep it boring. Load one input file, read one config, run one processing function, run a few validation checks, write one log, and export one file. After that, I would add a second report and check whether the shared methods still make sense. If adding the second report feels easy, the framework idea is working.",
+      },
+      {
+        id: "s24",
+        title: "24. Why this idea fits my projects",
+        text:
+          "I like this idea because it sits between data work and system design. It is still practical: files go in, reports come out. But the interesting part is the structure around it. The controller, queue, reusable methods, validation, and logging turn repeated report work into something that can grow without becoming a pile of separate scripts.",
+      },
+      {
+        id: "s25",
+        title: "25. Main takeaway",
+        text:
+          "The main takeaway is simple: automation becomes more useful when the repeated parts are standardized. A script can save time once. A small framework can make the next report easier too. The goal is not to overbuild a simple Excel task. The goal is to avoid writing the same loading, checking, logging, and exporting logic again and again.",
       },
     ],
   },

@@ -16,6 +16,7 @@ import { EqualizerPage } from "./components/EqualizerPage";
 import { AstronautLogoLab } from "./components/AstronautLogoLab";
 import { INFOPage } from "./components/info";
 import { PrivacyPage } from "./components/PrivacyPage";
+import { TerminalOverlay } from "./components/TerminalOverlay";
 
 import { primeAudio, startStatic, stopStatic, playSound } from "./utils/sfx";
 import { TypewriterCursorProvider } from "./components/Typewriter";
@@ -24,8 +25,10 @@ import { useUI } from "./store/ui";
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [systemsTargetSlug, setSystemsTargetSlug] = useState<string | null>(null);
+  const [terminalOpen, setTerminalOpen] = useState(false);
 
   const primedRef = useRef(false);
+  const terminalButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const { introDone, markIntroDone, effectsEnabled, soundEnabled } = useUI();
 
@@ -61,15 +64,35 @@ export default function App() {
     if (!effectsEnabled && !introDone) markIntroDone();
   }, [effectsEnabled, introDone, markIntroDone]);
 
+  const navigateToTab = (tab: TabId) => {
+    setActiveTab(tab);
+    if (tab !== "systems") setSystemsTargetSlug(null);
+  };
+
+  const closeTerminal = () => {
+    setTerminalOpen(false);
+    window.requestAnimationFrame(() => {
+      terminalButtonRef.current?.focus();
+    });
+  };
+
+  const openTerminal = () => {
+    if (soundEnabled) {
+      primeAudio().catch(() => {});
+      playSound("TERM", 0.22, 1.0, 120);
+    }
+    setTerminalOpen(true);
+  };
+
   return (
     <CRTScreen>
       <TypewriterCursorProvider>
         <RetroNavigation
           activeTab={activeTab}
-          onChange={(tab) => {
-            setActiveTab(tab);
-            if (tab !== "systems") setSystemsTargetSlug(null);
-          }}
+          onChange={navigateToTab}
+          onOpenTerminal={openTerminal}
+          terminalButtonRef={terminalButtonRef}
+          terminalOpen={terminalOpen}
         />
 
         {activeTab === "home" && (
@@ -146,6 +169,12 @@ export default function App() {
             </button>
           </div>
         </footer>
+
+        <TerminalOverlay
+          open={terminalOpen}
+          onClose={closeTerminal}
+          onNavigate={navigateToTab}
+        />
       </TypewriterCursorProvider>
     </CRTScreen>
   );

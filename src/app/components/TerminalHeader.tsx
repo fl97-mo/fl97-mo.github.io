@@ -20,7 +20,7 @@ export function TerminalHeader({ onIntroDone, introAlreadyDone = false }: Props)
   const [step, setStep] = useState<0 | 1 | 2 | 3>(introAlreadyDone ? 3 : 0);
 
   useEffect(() => {
-    if (introAlreadyDone) setStep(3);
+    setStep(introAlreadyDone ? 3 : 0);
   }, [introAlreadyDone]);
 
   useEffect(() => {

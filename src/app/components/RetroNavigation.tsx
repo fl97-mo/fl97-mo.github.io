@@ -1,4 +1,5 @@
-import { Home, Code, Music, Layers, SlidersHorizontal, Rocket } from "lucide-react";
+import type { RefObject } from "react";
+import { Home, Code, Music, Layers, SlidersHorizontal, Rocket, Terminal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useUI } from "../store/ui";
 import { playMechClick, playSound, primeAudio, stopHoverNoise } from "../utils/sfx";
@@ -84,9 +85,15 @@ function RetroToggle({
 export function RetroNavigation({
   activeTab,
   onChange,
+  onOpenTerminal,
+  terminalButtonRef,
+  terminalOpen = false,
 }: {
   activeTab: TabId;
   onChange: (tab: TabId) => void;
+  onOpenTerminal: () => void;
+  terminalButtonRef?: RefObject<HTMLButtonElement | null>;
+  terminalOpen?: boolean;
 }) {
   const { soundEnabled, setSoundEnabled, effectsEnabled, setEffectsEnabled } = useUI();
 
@@ -114,7 +121,33 @@ export function RetroNavigation({
     <div className="mb-8">
       <nav className="border-2 border-primary/40 bg-card/50 p-2 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
         <div className="grid gap-2 md:gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="grid gap-2 grid-cols-[auto_repeat(2,minmax(0,1fr))] sm:grid-cols-[auto_repeat(3,minmax(0,1fr))] xl:grid-cols-[auto_repeat(6,minmax(0,1fr))]">
+            <button
+              ref={terminalButtonRef}
+              type="button"
+              aria-label="Open terminal"
+              aria-pressed={terminalOpen}
+              title="Open terminal"
+              onClick={onOpenTerminal}
+              className={`
+                h-11 w-11
+                flex items-center justify-center
+                border-2 transition-all duration-100
+                ${
+                  terminalOpen
+                    ? "border-primary bg-primary text-background shadow-[0_0_15px_rgba(0,255,65,0.6)]"
+                    : "border-primary/50 bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.4)]"
+                }
+              `}
+              style={{
+                boxShadow: terminalOpen
+                  ? "inset -2px -2px 0px rgba(0,0,0,0.5), inset 2px 2px 0px rgba(0,255,65,0.3)"
+                  : "inset -2px -2px 0px rgba(0,255,65,0.3), inset 2px 2px 0px rgba(0,0,0,0.5)",
+              }}
+            >
+              <Terminal className="h-5 w-5 shrink-0" />
+            </button>
+
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
