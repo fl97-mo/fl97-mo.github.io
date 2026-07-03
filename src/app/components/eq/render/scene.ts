@@ -26,6 +26,7 @@ import type { BgPix, Particle, PointerState, Star } from "../types";
 import { bandEnergy, computeCols, updateStarBandsSmooth } from "../audio/bands";
 import { initStars, drawStars } from "./stars";
 import { drawWalker } from "./walkter";
+import { getCrtPalette } from "../../../utils/crtTheme";
 
 type Ref<T> = { current: T };
 
@@ -94,6 +95,7 @@ export function drawWalkers(
   nowMs: number,
   deps: DrawWalkersDeps
 ) {
+  const crt = getCrtPalette();
   const dpr = window.devicePixelRatio || 1;
   const tNow = nowMs * 0.001;
 
@@ -137,7 +139,7 @@ export function drawWalkers(
       const aa = clamp(p.a * tw2 * baseA, 0, 0.34);
 
       if (aa <= 0.001) continue;
-      g.fillStyle = `rgba(0,255,65,${aa.toFixed(3)})`;
+      g.fillStyle = crt.rgba(aa);
       g.fillRect(p.x, p.y, p.s, p.s);
     }
     g.restore();
@@ -226,12 +228,12 @@ export function drawWalkers(
   drawStars(g, stars, dt, nowMs, an, freq, bass, mids, air, kick, beat, beatImpulse, sceneVis, beatCount, deps);
 
   if (SCAN_ALPHA > 0) {
-    g.fillStyle = `rgba(0,255,65,${(SCAN_ALPHA * 0.55).toFixed(3)})`;
+    g.fillStyle = crt.rgba(SCAN_ALPHA * 0.55);
     const step = Math.max(2, Math.floor(4 * dpr));
     for (let y = 0; y < h; y += step) g.fillRect(0, y, w, 1);
   }
 
-  g.strokeStyle = `rgba(0,255,65,${(0.14 + bass * 0.22 + kick * 0.12).toFixed(3)})`;
+  g.strokeStyle = crt.rgba(0.14 + bass * 0.22 + kick * 0.12);
   g.lineWidth = Math.max(1, Math.floor(1 * dpr));
   g.beginPath();
   g.moveTo(0, h - 0.5);
@@ -259,7 +261,7 @@ export function drawWalkers(
 
     g.save();
     g.globalCompositeOperation = "lighter";
-    g.strokeStyle = `rgba(0,255,65,${a.toFixed(3)})`;
+    g.strokeStyle = crt.rgba(a);
     g.lineWidth = Math.max(1, Math.floor((1.0 + mids * 0.35 + kick * 0.2) * dpr));
 
     g.beginPath();
@@ -498,7 +500,7 @@ export function drawWalkers(
     p.y += p.vy * dt;
     const aa = clamp(p.life, 0, 1) * (0.12 + air * 0.2 + kick * 0.1) * motion;
     if (aa > 0.001) {
-      g.fillStyle = `rgba(0,255,65,${aa.toFixed(3)})`;
+      g.fillStyle = crt.rgba(aa);
       g.fillRect(
         Math.floor(p.x),
         Math.floor(p.y),

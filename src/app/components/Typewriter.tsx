@@ -59,9 +59,9 @@ export function TypewriterCursorProvider({ children }: { children: ReactNode }) 
     () => ({ typingIds, lastFinishedId, startTyping, finishTyping, stopInstance }),
     [typingIds, lastFinishedId, startTyping, finishTyping, stopInstance]
   );
-const { soundEnabled, effectsEnabled } = useUI();
+const { soundEnabled, effectsEnabled, accessibilityEnabled } = useUI();
 useEffect(() => {
-  if (!soundEnabled || !effectsEnabled || typingIds.length === 0) {
+  if (!soundEnabled || !effectsEnabled || accessibilityEnabled || typingIds.length === 0) {
     stopTypingLoop();
     return;
   }
@@ -71,7 +71,7 @@ useEffect(() => {
   return () => {
     stopTypingLoop();
   };
-}, [soundEnabled, effectsEnabled, typingIds.length]);
+}, [soundEnabled, effectsEnabled, accessibilityEnabled, typingIds.length]);
 
   return <TypewriterCursorContext.Provider value={value}>{children}</TypewriterCursorContext.Provider>;
 }
@@ -102,9 +102,9 @@ export function TypewriterText({
   onDone?: () => void;
 }) {
   const prefersReduced = usePrefersReducedMotion();
-  const { effectsEnabled } = useUI();
+  const { effectsEnabled, accessibilityEnabled } = useUI();
 
-  const reduceMotion = prefersReduced || !effectsEnabled;
+  const reduceMotion = prefersReduced || !effectsEnabled || accessibilityEnabled;
 
   const { typingIds, lastFinishedId, startTyping, finishTyping, stopInstance } =
     useTypewriterCursorCtx();

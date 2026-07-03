@@ -603,17 +603,17 @@ useEffect(() => {
         onChange={handleUploadChange}
       />
 
-      <div className="mb-4 border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="text-muted-foreground text-sm">
+      <div className="mb-4 border border-primary/20 rounded bg-background/40 p-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_13rem] md:items-center">
+        <div className="min-w-0 text-muted-foreground text-sm leading-relaxed">
           <span className="text-primary">{">"}</span>{" "}
           Upload local audio files, then press PLAY. The EQ reads directly from your browser.
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid w-full gap-2 md:justify-self-end">
           <button
             type="button"
             onClick={() => uploadInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 px-3 text-sm border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
             style={{
               boxShadow:
                 "inset -2px -2px 0px var(--crt-inset-button), inset 2px 2px 0px rgba(0,0,0,0.55)",
@@ -627,7 +627,7 @@ useEffect(() => {
             <button
               type="button"
               onClick={clearQueue}
-              className="inline-flex items-center gap-2 px-5 py-2 border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 px-3 text-sm border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all"
               style={{
                 boxShadow:
                   "inset -2px -2px 0px var(--crt-focus-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
@@ -643,11 +643,21 @@ useEffect(() => {
       <div className="grid grid-cols-1 lg:grid-cols-[2.35fr_0.65fr] gap-4">
         <div className="border border-primary/20 rounded bg-background/40 p-4">
           <div className="border border-primary/15 rounded bg-background/30 p-3 mb-2">
-            <canvas ref={walkersRef} className="w-full h-56 rounded" />
+            <canvas
+              ref={walkersRef}
+              role="img"
+              aria-label="Animated audio walker visualization"
+              className="w-full h-56 rounded"
+            />
           </div>
 
           <div className="border border-primary/15 rounded bg-background/30 p-2">
-            <canvas ref={spectrumRef} className="w-full h-64 rounded" />
+            <canvas
+              ref={spectrumRef}
+              role="img"
+              aria-label="Audio spectrum visualization"
+              className="w-full h-64 rounded"
+            />
           </div>
 
           <div className="mt-2 text-xs text-muted-foreground tracking-widest flex items-center justify-between gap-3">
@@ -667,6 +677,8 @@ useEffect(() => {
             <div className="text-xs text-muted-foreground tracking-widest w-16">{formatTime(currentTime)}</div>
             <input
               type="range"
+              aria-label="Seek audio position"
+              aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
               min={0}
               max={Math.max(0.001, duration)}
               step={0.01}
@@ -708,6 +720,8 @@ style={{
             <div className="text-xs text-muted-foreground tracking-widest w-16">VOLUME</div>
             <input
               type="range"
+              aria-label="Volume"
+              aria-valuetext={`${Math.round(volume * 100)} percent`}
               min={0}
               max={1}
               step={0.01}
@@ -779,7 +793,10 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
         <aside className="border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-4">
           <div className="border border-primary/15 rounded bg-background/30 p-3">
-            <pre className="text-sm text-muted-foreground whitespace-pre-wrap select-none leading-5">
+            <pre
+              aria-live="polite"
+              className="text-sm text-muted-foreground whitespace-pre-wrap select-none leading-5"
+            >
               {nowPlayingText}
             </pre>
           </div>
@@ -797,6 +814,8 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
                   return (
                     <button
                       key={t.id}
+                      aria-current={active ? "true" : undefined}
+                      aria-label={`${active ? "Current track" : "Load track"}: ${label}`}
                       onClick={() => {
                         forceAutoplayRef.current = true;
                         setEqActiveId(t.id);

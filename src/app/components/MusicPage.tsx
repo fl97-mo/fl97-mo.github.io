@@ -21,6 +21,68 @@ type MusicItem = {
 
 const ITEMS: MusicItem[] = [
   {
+    id: "ufo",
+    name: "NOMKEE - ENTER THE UFO",
+    desc: "2018 - Track - Electro House / Spacey",
+    category: "Track",
+    year: 2018,
+    tags: ["EDM", "Electro", "House", "Space"],
+    file: "NOMKEE_-_Enter_the_UFO.mp3",
+    publicFile: "NOMKEE - Enter the UFO.mp3",
+    detail:
+      "> INFO\n" +
+      "-- One of my earliest tracks, and also one of the most popular.\n" +
+      "-- The intro was sampled, then I stacked a distorted, aggressive bass.\n" +
+      "-- High contrast: calm / spacey sections vs hard EDM drops.\n" +
+      "-- Simple pluck synths keep the melody clean.\n",
+  },
+  {
+    id: "iknow",
+    name: "NOMKEE - I KNOW YOU BETTER",
+    desc: "2020 - Track - Electro / Dark / Effects",
+    category: "Track",
+    year: 2020,
+    tags: ["EDM", "Electro", "Dark", "FX"],
+    file: "NOMKEE_-_I_know_you_better.wav",
+    publicFile: "NOMKEE - I know you better.mp3",
+    detail:
+      "> INFO\n" +
+      "-- Darker, still dance-driven.\n" +
+      "-- Switches from melancholic tension into euphoric drops.\n" +
+      "-- Heavy use of FX, directly inspired by a festival visit.\n" +
+      "-- I wanted to push transitions and atmosphere harder.\n",
+  },
+  {
+    id: "dontlook",
+    name: "NOMKEE - DONT WANT TO LOOK AWAY",
+    desc: "2020 - Intro - Clocks / Deep-House / Unfinished",
+    category: "Intro",
+    year: 2020,
+    tags: ["Deep House", "Clocks", "Unfinished", "FX"],
+    file: "NOMKEE_-_Dont_want_to_look_away.mp3",
+    publicFile: "NOMKEE - Dont want to look away.mp3",
+    detail:
+      "> INFO\n" +
+      "-- Short experiment, not a finished song.\n" +
+      "-- I loved the transition + the FX chain.\n" +
+      "-- The vibe fits the overall universe, so it belongs here.\n",
+  },
+  {
+    id: "rayguns",
+    name: "NOMKEE - RAYGUNS EVERYWHERE",
+    desc: "2022 - Action music snippet - Cyberpunk / Hard / Unfinished",
+    category: "Action music snippet",
+    year: 2022,
+    tags: ["Cyberpunk", "Hard", "Snippet", "Unfinished"],
+    file: "Nomkee_-_Rayguns_everywhere.wav",
+    publicFile: "Nomkee - Rayguns everywhere.wav",
+    detail:
+      "> INFO\n" +
+      "-- Very short action snippet, pure experiment.\n" +
+      "-- Was never meant for upload.\n" +
+      "-- Rediscovered it in 2025 and thought: why not.\n",
+  },
+  {
     id: "astro97-part-1",
     name: "NOMKEE - BALLAD OF THE WANDERING ASTRO97 PART 1",
     desc: "2026 - Track - Melodic EDM / Space / Melancholic",
@@ -158,13 +220,6 @@ const ITEMS: MusicItem[] = [
 ];
 
 const PUBLIC_BASE = import.meta.env.BASE_URL || "/";
-
-const FILTER_TAGS = Array.from(
-  ITEMS.reduce((tags, item) => {
-    item.tags?.forEach((tag) => tags.set(tag, (tags.get(tag) ?? 0) + 1));
-    return tags;
-  }, new Map<string, number>())
-).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
 function assetHref(base: string, file: string) {
   const raw = file.replace(/^\/+/, "");
@@ -307,6 +362,23 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
     return ITEMS.filter((item) => activeTags.every((tag) => item.tags?.includes(tag)));
   }, [activeTags]);
 
+  const visibleFilterTags = useMemo(() => {
+    const sourceItems = activeTags.length ? filteredItems : ITEMS;
+
+    return Array.from(
+      sourceItems.reduce((tags, item) => {
+        item.tags?.forEach((tag) => tags.set(tag, (tags.get(tag) ?? 0) + 1));
+        return tags;
+      }, new Map<string, number>())
+    ).sort((a, b) => {
+      const aActive = activeTagSet.has(a[0]);
+      const bActive = activeTagSet.has(b[0]);
+
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return b[1] - a[1] || a[0].localeCompare(b[0]);
+    });
+  }, [activeTagSet, activeTags.length, filteredItems]);
+
   const openEqualizer = () => {
     if (soundEnabled) void playSoundAsync("TERM", 0.18, 1.0, 420).catch(() => {});
     onOpenEQ();
@@ -391,7 +463,7 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
             ALL
           </button>
 
-          {FILTER_TAGS.map(([tag, count]) => {
+          {visibleFilterTags.map(([tag, count]) => {
             const active = activeTagSet.has(tag);
 
             return (

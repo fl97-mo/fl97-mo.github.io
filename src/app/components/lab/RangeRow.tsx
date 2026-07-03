@@ -32,6 +32,8 @@ export function RangeRow({
       </div>
       <input
         type="range"
+        aria-label={label.replace(/_/g, " ")}
+        aria-valuetext={valueStr}
         min={min}
         max={max}
         step={step}
@@ -39,7 +41,7 @@ export function RangeRow({
         onChange={(e) => onChange(Number(e.target.value))}
         className="neoRange w-full"
         style={{
-          background: `linear-gradient(to right, rgba(0,255,65,0.65) 0%, rgba(0,255,65,0.65) ${pct}%, rgba(0,255,65,0.14) ${pct}%, rgba(0,255,65,0.14) 100%)`,
+          background: `linear-gradient(to right, rgba(var(--crt-rgb),0.65) 0%, rgba(var(--crt-rgb),0.65) ${pct}%, rgba(var(--crt-rgb),0.14) ${pct}%, rgba(var(--crt-rgb),0.14) 100%)`,
         }}
       />
     </div>

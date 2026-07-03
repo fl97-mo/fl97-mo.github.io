@@ -27,6 +27,7 @@ import {
 } from "../constants";
 import { clamp, lerp } from "../math";
 import type { Star } from "../types";
+import { getCrtPalette } from "../../../utils/crtTheme";
 
 type Ref<T> = { current: T };
 
@@ -104,6 +105,7 @@ export function drawStars(
     starBandsSmoothRef: Ref<Float32Array | null>;
   }
 ) {
+  const crt = getCrtPalette();
   const dpr = window.devicePixelRatio || 1;
   const sb = deps.starBandsSmoothRef.current;
   const hasAudio = !!(an && deps.connectedRef.current && freq);
@@ -203,21 +205,21 @@ export function drawStars(
 
     const haloA = clamp(coreA * (0.2 + air * 0.22 + beatImpulse * 0.12), 0, 0.34);
     if (haloA > 0.001) {
-      g.strokeStyle = `rgba(0,255,65,${haloA.toFixed(3)})`;
+      g.strokeStyle = crt.rgba(haloA);
       g.lineWidth = Math.max(1, Math.floor(1.2 * dpr));
       g.beginPath();
       g.arc(cx, cy, rCore * 2.25, 0, Math.PI * 2);
       g.stroke();
     }
 
-    g.fillStyle = `rgba(0,255,65,${coreA.toFixed(3)})`;
+    g.fillStyle = crt.rgba(coreA);
     g.beginPath();
     g.arc(cx, cy, rCore, 0, Math.PI * 2);
     g.fill();
 
     const rimA = clamp(coreA * 0.62, 0, 0.7);
     if (rimA > 0.001) {
-      g.strokeStyle = `rgba(0,255,65,${rimA.toFixed(3)})`;
+      g.strokeStyle = crt.rgba(rimA);
       g.lineWidth = Math.max(1, Math.floor(1 * dpr));
       g.beginPath();
       g.arc(cx, cy, rCore * 1.06, 0, Math.PI * 2);
@@ -226,7 +228,7 @@ export function drawStars(
 
     const innerA = clamp(coreA * 0.22, 0, 0.24);
     if (innerA > 0.001) {
-      g.fillStyle = `rgba(0,255,65,${innerA.toFixed(3)})`;
+      g.fillStyle = crt.rgba(innerA);
       g.beginPath();
       g.arc(cx - rCore * 0.12, cy - rCore * 0.14, rCore * 0.44, 0, Math.PI * 2);
       g.fill();
@@ -240,7 +242,7 @@ export function drawStars(
     const spikeA = clamp(coreA * (0.12 + sparkle * 0.11), 0, 0.48);
 
     if (spikeA > 0.001) {
-      g.strokeStyle = `rgba(0,255,65,${spikeA.toFixed(3)})`;
+      g.strokeStyle = crt.rgba(spikeA);
       g.lineWidth = Math.max(1, Math.floor(1 * dpr));
       g.beginPath();
       g.moveTo(cx - spike, cy);
@@ -273,7 +275,7 @@ export function drawStars(
 
       if (ringA <= 0.001) continue;
 
-      g.strokeStyle = `rgba(0,255,65,${ringA.toFixed(3)})`;
+      g.strokeStyle = crt.rgba(ringA);
       g.lineWidth = Math.max(1, thick);
       g.beginPath();
       g.arc(cx, cy, rr, 0, Math.PI * 2);
@@ -281,7 +283,7 @@ export function drawStars(
 
       const glowA = ringA * 0.22;
       if (glowA > 0.001) {
-        g.strokeStyle = `rgba(0,255,65,${glowA.toFixed(3)})`;
+        g.strokeStyle = crt.rgba(glowA);
         g.lineWidth = Math.max(1, thick * 2.1);
         g.beginPath();
         g.arc(cx, cy, rr, 0, Math.PI * 2);

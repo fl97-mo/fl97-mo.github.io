@@ -20,6 +20,7 @@ import {
 } from "../constants";
 import { clamp } from "../math";
 import { computeCols, updateStarBandsSmooth } from "../audio/bands";
+import { getCrtPalette } from "../../../utils/crtTheme";
 
 type Ref<T> = { current: T };
 
@@ -84,6 +85,7 @@ export function drawSpectrum(
   tickList: number[],
   deps: DrawSpectrumDeps
 ) {
+  const crt = getCrtPalette();
   const dpr = window.devicePixelRatio || 1;
   const labelH = Math.floor(26 * dpr);
   const plotH = Math.max(1, h - labelH);
@@ -111,7 +113,7 @@ export function drawSpectrum(
   const topPad = Math.max(0, Math.floor((plotH - usedH) / 2));
 
   if (GRID_ALPHA > 0) {
-    g.strokeStyle = `rgba(0,255,65,${GRID_ALPHA})`;
+    g.strokeStyle = crt.rgba(GRID_ALPHA);
     g.lineWidth = 1;
     for (let s = 0; s <= SEGMENTS; s++) {
       const y = topPad + s * (segH + segGap);
@@ -170,14 +172,14 @@ export function drawSpectrum(
         const yy = topPad + (SEGMENTS - 1 - sIdx) * (segH + segGap);
         const tA = 1 - sIdx / Math.max(1, SEGMENTS - 1);
         const alpha = 0.22 + 0.7 * tA;
-        g.fillStyle = `rgba(0,255,65,${alpha.toFixed(3)})`;
+        g.fillStyle = crt.rgba(alpha);
         g.fillRect(x, yy, innerW, segH);
       }
 
       const peakSeg = clamp(Math.floor(peaks[i] * (SEGMENTS - 1)), 0, SEGMENTS - 1);
       const peakY = topPad + (SEGMENTS - 1 - peakSeg) * (segH + segGap);
 
-      g.fillStyle = "rgba(0,255,65,0.85)";
+      g.fillStyle = crt.rgba(0.85);
       g.fillRect(
         x,
         peakY - Math.max(1, Math.floor(PEAK_THICK_PX * dpr)),
@@ -187,12 +189,12 @@ export function drawSpectrum(
     }
 
     if (SCAN_ALPHA > 0) {
-      g.fillStyle = `rgba(0,255,65,${SCAN_ALPHA})`;
+      g.fillStyle = crt.rgba(SCAN_ALPHA);
       const step = Math.max(2, Math.floor(3 * dpr));
       for (let y = 0; y < plotH; y += step) g.fillRect(0, y, w, 1);
     }
 
-    g.strokeStyle = `rgba(0,255,65,${GRID_ALPHA * 1.4})`;
+    g.strokeStyle = crt.rgba(GRID_ALPHA * 1.4);
     g.lineWidth = 1;
     for (const hz of tickList) {
       const xn = hzToXNorm(hz);
@@ -203,7 +205,7 @@ export function drawSpectrum(
       g.stroke();
     }
 
-    g.fillStyle = "rgba(0,255,65,0.7)";
+    g.fillStyle = crt.rgba(0.7);
     g.font = `${Math.max(10, Math.floor(10 * dpr))}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
     g.textBaseline = "top";
     for (const hz of tickList) {
@@ -217,7 +219,7 @@ export function drawSpectrum(
 
     an.getByteTimeDomainData(time);
   } else {
-    g.fillStyle = "rgba(0,255,65,0.65)";
+    g.fillStyle = crt.rgba(0.65);
     g.font = `${Math.max(12, Math.round(12 * dpr))}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
     g.fillText("SPECTRUM OFFLINE", 12 * dpr, 18 * dpr);
   }

@@ -6,6 +6,7 @@ import {
   WALK_IDLE_SWAY_PX,
 } from "../constants";
 import { clamp, lerp, smoothstep } from "../math";
+import { getCrtPalette } from "../../../utils/crtTheme";
 
 export function drawWalker(
   g: CanvasRenderingContext2D,
@@ -29,6 +30,7 @@ export function drawWalker(
   pullDir: number,
   playing: boolean
 ) {
+  const crt = getCrtPalette();
   const dpr = window.devicePixelRatio || 1;
   const s = scale * dpr;
 
@@ -87,7 +89,7 @@ export function drawWalker(
   g.shadowOffsetX = 0;
   g.shadowOffsetY = 0;
 
-  g.strokeStyle = `rgba(0,255,65,${alpha.toFixed(3)})`;
+  g.strokeStyle = crt.rgba(alpha);
   g.lineWidth = Math.max(1, 1.35 * s);
   g.lineCap = "round";
   g.lineJoin = "round";
@@ -112,22 +114,22 @@ export function drawWalker(
     const gy = headCYP - headR * 0.52 + pitch * headR * 0.1;
     const grad = g.createRadialGradient(gx, gy, headR * 0.12, headCXP, headCYP, headR * 1.18);
 
-    grad.addColorStop(0, `rgba(0,255,65,${clamp(glassA * 1.7, 0, 0.45).toFixed(3)})`);
-    grad.addColorStop(0.35, `rgba(0,255,65,${clamp(glassA * 0.9, 0, 0.34).toFixed(3)})`);
-    grad.addColorStop(1, `rgba(0,255,65,${clamp(glassA * 0.16, 0, 0.12).toFixed(3)})`);
+    grad.addColorStop(0, crt.rgba(clamp(glassA * 1.7, 0, 0.45)));
+    grad.addColorStop(0.35, crt.rgba(clamp(glassA * 0.9, 0, 0.34)));
+    grad.addColorStop(1, crt.rgba(clamp(glassA * 0.16, 0, 0.12)));
     g.fillStyle = grad;
     g.fillRect(headCX - headR * 1.25, headCY - headR * 1.25, headR * 2.5, headR * 2.5);
 
     const streakA = clamp(glassA * 0.62, 0, 0.18);
     if (streakA > 0.001) {
-      g.strokeStyle = `rgba(0,255,65,${streakA.toFixed(3)})`;
+      g.strokeStyle = crt.rgba(streakA);
       g.lineWidth = Math.max(1, Math.floor(0.85 * dpr));
       g.beginPath();
       g.moveTo(headCX - headR * 0.62, headCY - headR * 0.18);
       g.lineTo(headCX + headR * 0.42, headCY + headR * 0.58);
       g.stroke();
 
-      g.strokeStyle = `rgba(0,255,65,${clamp(streakA * 0.75, 0, 0.16).toFixed(3)})`;
+      g.strokeStyle = crt.rgba(clamp(streakA * 0.75, 0, 0.16));
       g.lineWidth = Math.max(1, Math.floor(0.7 * dpr));
       g.beginPath();
       g.moveTo(headCX - headR * 0.46, headCY - headR * 0.58);
@@ -148,13 +150,13 @@ export function drawWalker(
   const visorW2 = Math.max(1 * dpr, visorW * (1 - face * 0.82));
   const visorH2 = visorH * (1 - face * 0.1);
 
-  g.strokeStyle = `rgba(0,255,65,${(alpha * 0.72).toFixed(3)})`;
+  g.strokeStyle = crt.rgba(alpha * 0.72);
   g.strokeRect(visorCX - visorW2 * 0.5, visorCY - visorH2 * 0.5, visorW2, visorH2);
 
   if (face > 0.18) {
     g.save();
     g.globalCompositeOperation = "lighter";
-    g.strokeStyle = `rgba(0,255,65,${clamp(alpha * (0.22 + face * 0.35), 0, 0.9).toFixed(3)})`;
+    g.strokeStyle = crt.rgba(clamp(alpha * (0.22 + face * 0.35), 0, 0.9));
     g.lineWidth = Math.max(1, Math.floor(0.9 * dpr));
     const edgeX = visorCX + (visorW2 * 0.5) * Math.sign(yaw || 1);
     g.beginPath();
@@ -166,7 +168,7 @@ export function drawWalker(
 
   const visorFillA = clamp(alpha * (0.06 + airM * 0.1 + kickM * 0.08 + bassM * 0.05), 0, 0.3);
   if (visorFillA > 0.001) {
-    g.fillStyle = `rgba(0,255,65,${visorFillA.toFixed(3)})`;
+    g.fillStyle = crt.rgba(visorFillA);
     g.fillRect(visorCX - visorW2 * 0.5, visorCY - visorH2 * 0.5, visorW2, visorH2);
   }
 
@@ -197,7 +199,7 @@ export function drawWalker(
   const farA = lerp(1.0, 0.62, sideT);
   const aR = rightNear ? 1.0 : farA;
 
-  g.strokeStyle = `rgba(0,255,65,${alpha.toFixed(3)})`;
+  g.strokeStyle = crt.rgba(alpha);
   g.beginPath();
   g.moveTo(shL, shoulderY);
   g.lineTo(
@@ -206,7 +208,7 @@ export function drawWalker(
   );
   g.stroke();
 
-  g.strokeStyle = `rgba(0,255,65,${(alpha * aR).toFixed(3)})`;
+  g.strokeStyle = crt.rgba(alpha * aR);
   g.beginPath();
   g.moveTo(shR, shoulderY);
   g.lineTo(
@@ -215,7 +217,7 @@ export function drawWalker(
   );
   g.stroke();
 
-  g.strokeStyle = `rgba(0,255,65,${alpha.toFixed(3)})`;
+  g.strokeStyle = crt.rgba(alpha);
 
   const strideAmp = lerp(playing ? WALK_IDLE_ALPHA : 0, 1, m);
   const swingRaw = Math.sin(phase);
@@ -320,7 +322,7 @@ export function drawWalker(
 
   function drawLeg(hipX2: number, fx: number, fy: number, sgn: number, lift: number, a: number) {
     const { kx, ky } = knee(hipX2, fx, fy, sgn, lift);
-    g.strokeStyle = `rgba(0,255,65,${clamp(a, 0, 1).toFixed(3)})`;
+    g.strokeStyle = crt.rgba(clamp(a, 0, 1));
     g.beginPath();
     g.moveTo(hipX2, hipY);
     g.lineTo(kx, ky);
@@ -350,10 +352,10 @@ export function drawWalker(
   const packW = 10 * s;
   const packH = 16 * s;
   const packY = lerp(torsoTopY, hipY, 0.25);
-  g.strokeStyle = `rgba(0,255,65,${(alpha * 0.78).toFixed(3)})`;
+  g.strokeStyle = crt.rgba(alpha * 0.78);
   g.strokeRect(torsoCX - packW * 0.5, packY, packW, packH);
 
   const pulse = 0.035 + bassM * 0.16 + airM * 0.08 + kickM * 0.2;
-  g.fillStyle = `rgba(0,255,65,${(alpha * pulse).toFixed(3)})`;
+  g.fillStyle = crt.rgba(alpha * pulse);
   g.fillRect(torsoCX - packW * 0.5, packY, packW, packH);
 }

@@ -1,6 +1,7 @@
 import { clamp, lerp, smoothstep } from "./math";
 import { mulberry32 } from "./random";
 import type { RenderParams } from "./types";
+import { getCrtPalette } from "../../utils/crtTheme";
 
 export function drawEqAstronaut(
   g: CanvasRenderingContext2D,
@@ -8,8 +9,8 @@ export function drawEqAstronaut(
   h: number,
   p: RenderParams
 ) {
-  const green = (a: number) =>
-    `rgba(0,255,65,${clamp(a, 0, 1).toFixed(3)})`;
+  const crt = getCrtPalette();
+  const green = (a: number) => crt.rgba(clamp(a, 0, 1));
 
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, w, h);

@@ -172,6 +172,7 @@ export default function App() {
 
         <TerminalOverlay
           open={terminalOpen}
+          activeTab={activeTab}
           onClose={closeTerminal}
           onNavigate={navigateToTab}
         />

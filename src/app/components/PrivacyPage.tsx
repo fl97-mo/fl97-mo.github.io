@@ -81,6 +81,23 @@ The equalizer upload feature uses your browser's local file selection and tempor
 Selected audio files stay on your device and are not uploaded to me, GitHub, Cloudflare, or a
 separate audio server by the EQ feature.
 
+4c) Local terminal commands and browser/session display
+-------------------------------------------------------
+The virtual terminal includes commands such as "whoami", "status", and "now".
+These commands may display local browser/session information, for example:
+
+- browser language
+- viewport / display size
+- timezone
+- online/offline status
+- selected UI settings (sound, effects, accessibility mode)
+- current virtual directory / active website section
+- local EQ queue status
+
+This information is read and shown locally in your browser only. It is not uploaded
+to me, GitHub, Cloudflare, or a separate analytics/tracking service by these terminal
+commands. The commands do not create visitor profiles.
+
 
 5) International data transfers (third countries)
 -------------------------------------------------

@@ -4,10 +4,12 @@ import { Terminal as TerminalIcon } from "lucide-react";
 
 import type { TabId } from "./RetroNavigation";
 import { useUI } from "../store/ui";
+import { getCrtPalette } from "../utils/crtTheme";
 import { playSoundAsync } from "../utils/sfx";
 
 type TerminalOverlayProps = {
   open: boolean;
+  activeTab: TabId;
   onClose: () => void;
   onNavigate: (tab: TabId) => void;
 };
@@ -31,6 +33,14 @@ type TerminalCommandContext = {
   setCwd: (cwd: string) => void;
   navigate: (tab: TabId) => void;
   triggerMower: () => void;
+  triggerMatrix: () => void;
+  activeTab: TabId;
+  soundEnabled: boolean;
+  effectsEnabled: boolean;
+  accessibilityEnabled: boolean;
+  eqQueueCount: number;
+  eqActiveLabel: string;
+  eqRepeat: string;
   motionDisabled: boolean;
 };
 
@@ -47,6 +57,7 @@ const MAX_INPUT_LENGTH = 120;
 const MAX_HISTORY_LINES = 100;
 const MOWER_DURATION_MS = 6450;
 const MOWER_ROWS = 20;
+const MATRIX_DURATION_MS = 4600;
 const REBOOT_STEP_MS = 560;
 
 const REBOOT_SEQUENCE = [
@@ -156,6 +167,42 @@ function cdToTarget(args: string[], ctx: TerminalCommandContext): TerminalResult
   return { output: [`cwd: ${target.cwd}`, `entered ${target.label}`] };
 }
 
+function yesNo(value: boolean) {
+  return value ? "ON" : "OFF";
+}
+
+function tabLabel(tab: TabId) {
+  if (tab === "eq") return "EQUALIZER.DIR";
+  if (tab === "astronaut") return "ASTRO.EXE";
+  return `${tab.toUpperCase()}.DIR`;
+}
+
+function visitorSnapshot() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    return {
+      language: "unknown",
+      viewport: "unknown",
+      timezone: "unknown",
+      online: "unknown",
+      platform: "unknown",
+    };
+  }
+
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown";
+  const platform =
+    "userAgentData" in navigator
+      ? (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ?? "unknown"
+      : navigator.platform || "unknown";
+
+  return {
+    language: navigator.language || "unknown",
+    viewport: `${window.innerWidth}x${window.innerHeight}`,
+    timezone,
+    online: navigator.onLine ? "online" : "offline",
+    platform,
+  };
+}
+
 const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
   {
     name: "help",
@@ -172,6 +219,73 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
     usage: "pwd",
     description: "print current virtual directory",
     run: (_args, ctx) => ({ output: [ctx.cwd] }),
+  },
+  {
+    name: "status",
+    usage: "status",
+    description: "show current portfolio and session state",
+    run: (_args, ctx) => ({
+      output: [
+        [
+          "> STATUS",
+          `-- TAB: ${tabLabel(ctx.activeTab)}`,
+          `-- CWD: ${ctx.cwd}`,
+          `-- SOUND: ${yesNo(ctx.soundEnabled)}`,
+          `-- EFFECTS: ${yesNo(ctx.effectsEnabled)}`,
+          `-- A11Y: ${yesNo(ctx.accessibilityEnabled)}`,
+          `-- MOTION: ${ctx.motionDisabled ? "REDUCED" : "ENABLED"}`,
+          `-- EQ_QUEUE: ${ctx.eqQueueCount}`,
+          `-- EQ_REPEAT: ${ctx.eqRepeat}`,
+        ].join("\n"),
+      ],
+    }),
+  },
+  {
+    name: "whoami",
+    usage: "whoami",
+    description: "describe the current visitor session",
+    run: () => {
+      const visitor = visitorSnapshot();
+
+      return {
+        output: [
+          [
+            "visitor@local-browser",
+            "---------------------",
+            "role: guest / read-only visitor",
+            "account: none",
+            "tracking profile: none",
+            `language: ${visitor.language}`,
+            `platform: ${visitor.platform}`,
+            `viewport: ${visitor.viewport}`,
+            `timezone: ${visitor.timezone}`,
+            `network: ${visitor.online}`,
+          ].join("\n"),
+        ],
+      };
+    },
+  },
+  {
+    name: "now",
+    usage: "now",
+    description: "show what is active right now",
+    run: (_args, ctx) => {
+      const visitor = visitorSnapshot();
+
+      return {
+        output: [
+          [
+            "> NOW",
+            `-- LOCAL_TIME: ${new Date().toLocaleString()}`,
+            `-- VIEW: ${tabLabel(ctx.activeTab)}`,
+            `-- CWD: ${ctx.cwd}`,
+            `-- ACTIVE_AUDIO: ${ctx.eqActiveLabel}`,
+            `-- QUEUE: ${ctx.eqQueueCount} item${ctx.eqQueueCount === 1 ? "" : "s"}`,
+            `-- DISPLAY: ${visitor.viewport}`,
+          ].join("\n"),
+        ],
+      };
+    },
   },
   {
     name: "ls",
@@ -223,7 +337,7 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
           "location: Germany",
           "stack: React, TypeScript, Linux, Git, Bash, Web Audio, Canvas",
           "project version: SYSTEM VERSION 1.0.0",
-          "theme: CRT green terminal",
+          "theme: CRT terminal",
         ].join("\n"),
       ],
     }),
@@ -261,18 +375,12 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
   {
     name: "matrix",
     usage: "matrix",
-    description: "print a tiny fake boot sequence",
-    run: () => ({
-      output: [
-        [
-          "matrix.sys initializing...",
-          "01000110 01001100 00110001 00111001",
-          "green channel locked",
-          "shell sandbox: fake",
-          "no exploit found",
-        ].join("\n"),
-      ],
-    }),
+    description: "run a short falling-code terminal effect",
+    run: (_args, ctx) => {
+      if (ctx.motionDisabled) return { output: ["matrix.sys skipped: motion disabled"] };
+      ctx.triggerMatrix();
+      return { output: ["matrix.sys streaming..."] };
+    },
   },
   {
     name: "flux",
@@ -324,29 +432,31 @@ function drawPixelMower(
   direction: -1 | 1,
   scale: number
 ) {
+  const crt = getCrtPalette();
+
   ctx.save();
   ctx.translate(x, y);
   if (direction < 0) ctx.scale(-1, 1);
 
-  ctx.fillStyle = "rgba(3, 8, 3, 0.95)";
-  ctx.strokeStyle = "rgba(0, 255, 65, 0.88)";
+  ctx.fillStyle = crt.card;
+  ctx.strokeStyle = crt.rgba(0.88);
   ctx.lineWidth = Math.max(1, scale);
 
   ctx.fillRect(-18 * scale, -8 * scale, 36 * scale, 14 * scale);
   ctx.strokeRect(-18 * scale, -8 * scale, 36 * scale, 14 * scale);
 
-  ctx.fillStyle = "rgba(0, 255, 65, 0.34)";
+  ctx.fillStyle = crt.rgba(0.34);
   ctx.fillRect(-8 * scale, -14 * scale, 18 * scale, 6 * scale);
   ctx.strokeRect(-8 * scale, -14 * scale, 18 * scale, 6 * scale);
 
-  ctx.strokeStyle = "rgba(0, 255, 65, 0.7)";
+  ctx.strokeStyle = crt.rgba(0.7);
   ctx.beginPath();
   ctx.moveTo(12 * scale, -12 * scale);
   ctx.lineTo(28 * scale, -24 * scale);
   ctx.stroke();
 
   ctx.fillStyle = "rgba(0, 0, 0, 0.95)";
-  ctx.strokeStyle = "rgba(0, 255, 65, 0.82)";
+  ctx.strokeStyle = crt.rgba(0.82);
   for (const wheelX of [-12, 12]) {
     ctx.beginPath();
     ctx.arc(wheelX * scale, 8 * scale, 5 * scale, 0, Math.PI * 2);
@@ -403,6 +513,79 @@ function drawMowedRows(
   drawPixelMower(ctx, mowerX, mowerY, direction, mowerScale);
 }
 
+type MatrixColumn = {
+  x: number;
+  y: number;
+  speed: number;
+  tail: number;
+  phase: number;
+};
+
+function makeMatrixColumns(width: number, height: number, colW: number) {
+  const count = Math.max(8, Math.ceil(width / colW));
+
+  return Array.from({ length: count }, (_, index) => ({
+    x: index * colW + colW * 0.2,
+    y: -Math.random() * height,
+    speed: 92 + Math.random() * 165,
+    tail: 8 + Math.floor(Math.random() * 16),
+    phase: Math.floor(Math.random() * 128),
+  }));
+}
+
+function drawMatrixRain(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  columns: MatrixColumn[],
+  dt: number,
+  elapsedMs: number
+) {
+  const crt = getCrtPalette();
+  const rowH = 16;
+  const fadeOut = 1 - Math.max(0, elapsedMs - MATRIX_DURATION_MS + 650) / 650;
+  const fade = Math.max(0, Math.min(1, fadeOut));
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.font = `14px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+  ctx.textBaseline = "top";
+
+  for (let i = 0; i < columns.length; i++) {
+    const col = columns[i];
+    col.y += col.speed * dt;
+
+    if (col.y - col.tail * rowH > height) {
+      col.y = -Math.random() * height * 0.45;
+      col.speed = 92 + Math.random() * 165;
+      col.tail = 8 + Math.floor(Math.random() * 16);
+      col.phase = Math.floor(Math.random() * 128);
+    }
+
+    const headRow = Math.floor(col.y / rowH);
+
+    for (let j = 0; j < col.tail; j++) {
+      const y = col.y - j * rowH;
+      if (y < -rowH || y > height + rowH) continue;
+
+      const tailT = 1 - j / Math.max(1, col.tail - 1);
+      const pulse = 0.74 + 0.26 * Math.sin((elapsedMs * 0.012 + i * 1.7 + j * 0.9) * 0.9);
+      const alpha = (j === 0 ? 0.98 : 0.14 + tailT * 0.58) * pulse * fade;
+      const bit = (headRow - j + col.phase + i * 7) % 2 === 0 ? "0" : "1";
+
+      ctx.fillStyle = crt.rgba(alpha);
+      ctx.fillText(bit, col.x, y);
+    }
+  }
+
+  ctx.fillStyle = crt.rgba(0.08 * fade);
+  for (let y = 0; y < height; y += 5) {
+    ctx.fillRect(0, y, width, 1);
+  }
+}
+
 function usePrefersReducedMotion() {
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -425,11 +608,15 @@ function usePrefersReducedMotion() {
   return reducedMotion;
 }
 
-export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayProps) {
+export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: TerminalOverlayProps) {
   const {
     soundEnabled,
     effectsEnabled,
+    accessibilityEnabled,
     resetIntroForSession,
+    eqQueue,
+    eqActiveId,
+    eqRepeat,
     setEqQueue,
     setEqActiveId,
   } = useUI();
@@ -440,8 +627,11 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
   const inputRef = useRef<HTMLInputElement | null>(null);
   const outputRef = useRef<HTMLDivElement | null>(null);
   const mowerCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const matrixCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const mowerTimerRef = useRef<number | null>(null);
   const mowerRafRef = useRef<number | null>(null);
+  const matrixTimerRef = useRef<number | null>(null);
+  const matrixRafRef = useRef<number | null>(null);
   const rebootTimersRef = useRef<number[]>([]);
   const pointerDownInsideRef = useRef(false);
   const lineIdRef = useRef(3);
@@ -450,12 +640,17 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
   const [input, setInput] = useState("");
   const [rebooting, setRebooting] = useState(false);
   const [mowerActive, setMowerActive] = useState(false);
+  const [matrixActive, setMatrixActive] = useState(false);
   const [lines, setLines] = useState<TerminalLine[]>([
     { id: 1, text: "FL97-MO VIRTUAL TERMINAL", kind: "system" },
     { id: 2, text: "type help", kind: "output" },
   ]);
 
-  const motionDisabled = !effectsEnabled || prefersReducedMotion;
+  const motionDisabled = !effectsEnabled || accessibilityEnabled || prefersReducedMotion;
+  const eqActiveLabel = useMemo(() => {
+    const activeTrack = eqQueue.find((track) => track.id === eqActiveId);
+    return activeTrack?.title ?? "none";
+  }, [eqActiveId, eqQueue]);
 
   const makeLines = (texts: string[], kind: TerminalLineKind) => {
     const next: TerminalLine[] = [];
@@ -480,6 +675,16 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
     setMowerActive(false);
     window.requestAnimationFrame(() => {
       setMowerActive(true);
+    });
+  };
+
+  const triggerMatrix = () => {
+    if (matrixTimerRef.current !== null) window.clearTimeout(matrixTimerRef.current);
+    if (matrixRafRef.current !== null) window.cancelAnimationFrame(matrixRafRef.current);
+
+    setMatrixActive(false);
+    window.requestAnimationFrame(() => {
+      setMatrixActive(true);
     });
   };
 
@@ -531,12 +736,27 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
       setCwd,
       navigate: onNavigate,
       triggerMower,
+      triggerMatrix,
+      activeTab,
+      soundEnabled,
+      effectsEnabled,
+      accessibilityEnabled,
+      eqQueueCount: eqQueue.length,
+      eqActiveLabel,
+      eqRepeat,
       motionDisabled,
     }),
     [
+      accessibilityEnabled,
+      activeTab,
       cwd,
+      effectsEnabled,
+      eqActiveLabel,
+      eqQueue.length,
+      eqRepeat,
       motionDisabled,
       onNavigate,
+      soundEnabled,
     ]
   );
 
@@ -564,6 +784,8 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
     return () => {
       if (mowerTimerRef.current !== null) window.clearTimeout(mowerTimerRef.current);
       if (mowerRafRef.current !== null) window.cancelAnimationFrame(mowerRafRef.current);
+      if (matrixTimerRef.current !== null) window.clearTimeout(matrixTimerRef.current);
+      if (matrixRafRef.current !== null) window.cancelAnimationFrame(matrixRafRef.current);
       clearRebootTimers();
     };
   }, []);
@@ -617,6 +839,88 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
       if (mowerRafRef.current !== null) window.cancelAnimationFrame(mowerRafRef.current);
     };
   }, [mowerActive]);
+
+  useEffect(() => {
+    if (!matrixActive) return;
+
+    const canvas = matrixCanvasRef.current;
+    const host = outputRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !host || !ctx) return;
+
+    let start = 0;
+    let prev = 0;
+    let columns: MatrixColumn[] = [];
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    const resize = () => {
+      const rect = host.getBoundingClientRect();
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+
+      canvas.width = Math.ceil(width * dpr);
+      canvas.height = Math.ceil(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      columns = makeMatrixColumns(width, height, 14);
+    };
+
+    const stop = () => {
+      const rect = host.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      setMatrixActive(false);
+      matrixTimerRef.current = null;
+      matrixRafRef.current = null;
+    };
+
+    const tick = (now: number) => {
+      if (!start) {
+        start = now;
+        prev = now;
+        resize();
+      }
+
+      const elapsed = now - start;
+      const dt = Math.min(0.05, Math.max(0.001, (now - prev) / 1000));
+      prev = now;
+
+      const rect = host.getBoundingClientRect();
+      drawMatrixRain(ctx, rect.width, rect.height, columns, dt, elapsed);
+
+      if (elapsed < MATRIX_DURATION_MS) {
+        matrixRafRef.current = window.requestAnimationFrame(tick);
+      } else {
+        matrixTimerRef.current = window.setTimeout(stop, 120);
+      }
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+    matrixRafRef.current = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      if (matrixRafRef.current !== null) window.cancelAnimationFrame(matrixRafRef.current);
+      if (matrixTimerRef.current !== null) window.clearTimeout(matrixTimerRef.current);
+    };
+  }, [matrixActive]);
+
+  useEffect(() => {
+    if (!motionDisabled) return;
+    if (mowerRafRef.current !== null) window.cancelAnimationFrame(mowerRafRef.current);
+    if (mowerTimerRef.current !== null) window.clearTimeout(mowerTimerRef.current);
+    if (matrixRafRef.current !== null) window.cancelAnimationFrame(matrixRafRef.current);
+    if (matrixTimerRef.current !== null) window.clearTimeout(matrixTimerRef.current);
+    mowerRafRef.current = null;
+    mowerTimerRef.current = null;
+    matrixRafRef.current = null;
+    matrixTimerRef.current = null;
+    setMowerActive(false);
+    setMatrixActive(false);
+  }, [motionDisabled]);
 
   const handlePanelBlur = () => {
     window.setTimeout(() => {
@@ -696,7 +1000,7 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
         onPointerCancelCapture={() => {
           pointerDownInsideRef.current = false;
         }}
-        className="mt-3 flex h-[min(78vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded border-2 border-primary/60 bg-background/90 shadow-[0_0_35px_rgba(0,255,65,0.32)] sm:mt-6"
+        className="mt-3 flex h-[min(78vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded border-2 border-primary/60 bg-background/90 crt-glow-overlay sm:mt-6"
       >
         <div className="flex items-center justify-between gap-3 border-b border-primary/30 bg-card/80 px-3 py-2">
           <div className="flex min-w-0 items-center gap-2 text-primary">
@@ -714,44 +1018,56 @@ export function TerminalOverlay({ open, onClose, onNavigate }: TerminalOverlayPr
           </button>
         </div>
 
-        <div
-          ref={outputRef}
-          className="flex-1 cursor-text overflow-y-auto bg-black/25 px-4 py-3"
-          onPointerDown={(event) => {
-            if (event.target === outputRef.current) {
-              event.preventDefault();
-              inputRef.current?.focus();
-            }
-          }}
-          onClick={() => inputRef.current?.focus()}
-        >
-          {lines.map((line) => (
-            <pre
-              key={line.id}
-              className={`whitespace-pre-wrap break-words text-sm leading-6 ${lineClass(line.kind)}`}
-            >
-              {line.text}
-            </pre>
-          ))}
-
-          <form onSubmit={handleSubmit} className="mt-0 flex min-w-0 items-baseline gap-2">
-            <label htmlFor="terminal-input" className="sr-only">
-              Terminal command
-            </label>
-            <span className="shrink-0 whitespace-pre text-sm leading-6 text-primary">{cwd} $</span>
-            <input
-              ref={inputRef}
-              id="terminal-input"
-              value={input}
-              maxLength={MAX_INPUT_LENGTH}
-              disabled={rebooting}
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => setInput(event.target.value.slice(0, MAX_INPUT_LENGTH))}
-              className="min-w-0 flex-1 border-none bg-transparent p-0 text-sm leading-6 text-primary caret-primary outline-none placeholder:text-muted-foreground disabled:opacity-60"
-              placeholder=""
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          {matrixActive && (
+            <canvas
+              ref={matrixCanvasRef}
+              className="pointer-events-none absolute inset-0 z-10 opacity-95"
+              aria-hidden="true"
             />
-          </form>
+          )}
+
+          <div
+            ref={outputRef}
+            className="relative z-0 h-full cursor-text overflow-y-auto bg-black/25 px-4 py-3"
+            onPointerDown={(event) => {
+              if (event.target === outputRef.current) {
+                event.preventDefault();
+                inputRef.current?.focus();
+              }
+            }}
+            onClick={() => inputRef.current?.focus()}
+          >
+            <div role="log" aria-live="polite" aria-relevant="additions text">
+              {lines.map((line) => (
+                <pre
+                  key={line.id}
+                  className={`whitespace-pre-wrap break-words text-sm leading-6 ${lineClass(line.kind)}`}
+                >
+                  {line.text}
+                </pre>
+              ))}
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-0 flex min-w-0 items-baseline gap-2">
+              <label htmlFor="terminal-input" className="sr-only">
+                Terminal command
+              </label>
+              <span className="shrink-0 whitespace-pre text-sm leading-6 text-primary">{cwd} $</span>
+              <input
+                ref={inputRef}
+                id="terminal-input"
+                value={input}
+                maxLength={MAX_INPUT_LENGTH}
+                disabled={rebooting}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(event) => setInput(event.target.value.slice(0, MAX_INPUT_LENGTH))}
+                className="min-w-0 flex-1 border-none bg-transparent p-0 text-sm leading-6 text-primary caret-primary outline-none placeholder:text-muted-foreground disabled:opacity-60"
+                placeholder=""
+              />
+            </form>
+          </div>
         </div>
       </div>
     </div>

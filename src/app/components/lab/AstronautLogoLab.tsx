@@ -21,7 +21,7 @@ const LOCAL_STYLES = `
     appearance:none;
     height:12px;
     border-radius:9999px;
-    border:1px solid rgba(0,255,65,0.28);
+    border:1px solid rgba(var(--crt-rgb),0.28);
     box-shadow: inset 0 0 0 2px rgba(0,0,0,0.35);
     outline:none;
   }
@@ -31,18 +31,18 @@ const LOCAL_STYLES = `
     width:18px;
     height:18px;
     border-radius:9999px;
-    background: rgba(210,255,220,0.92);
-    border:2px solid rgba(0,255,65,0.65);
-    box-shadow: 0 0 12px rgba(0,255,65,0.35);
+    background: rgba(var(--crt-rgb),0.92);
+    border:2px solid rgba(var(--crt-rgb),0.65);
+    box-shadow: 0 0 12px rgba(var(--crt-rgb),0.35);
     cursor:pointer;
   }
   .neoRange::-moz-range-thumb{
     width:18px;
     height:18px;
     border-radius:9999px;
-    background: rgba(210,255,220,0.92);
-    border:2px solid rgba(0,255,65,0.65);
-    box-shadow: 0 0 12px rgba(0,255,65,0.35);
+    background: rgba(var(--crt-rgb),0.92);
+    border:2px solid rgba(var(--crt-rgb),0.65);
+    box-shadow: 0 0 12px rgba(var(--crt-rgb),0.35);
     cursor:pointer;
   }
   .neoRange::-moz-range-track{
@@ -67,6 +67,7 @@ export function AstronautLogoLab() {
   const ui = useUI() as any;
   const effectsEnabled = !!ui.effectsEnabled;
   const soundEnabled = !!ui.soundEnabled;
+  const accessibilityEnabled = !!ui.accessibilityEnabled;
 
   const [preset, setPreset] = useState<PosePreset>("threeQuarter");
   const [seed] = useState(() => Math.floor(Math.random() * 1e9));
@@ -209,7 +210,7 @@ export function AstronautLogoLab() {
     if (!gg) return;
 
     drawEqAstronaut(gg, c.width, c.height, params);
-  }, [params]);
+  }, [accessibilityEnabled, params]);
 
   const quickReset = () => {
     setRig(DEFAULT_RIG);
@@ -248,7 +249,7 @@ export function AstronautLogoLab() {
   };
 
   return (
-    <section className="mb-12 border border-primary/30 p-4 md:p-6 bg-card/50 rounded shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+    <section className="mb-12 border border-primary/30 p-4 md:p-6 bg-card/50 rounded crt-glow-soft">
       <style>{LOCAL_STYLES}</style>
 
       <h2 className="text-primary mb-3 flex items-center gap-2">
@@ -271,22 +272,33 @@ export function AstronautLogoLab() {
           <div className="relative border border-primary/15 rounded bg-black/95 p-2 overflow-hidden">
             <canvas
               ref={canvasRef}
+              role="img"
+              aria-label="Astronaut logo preview canvas"
               className="w-full h-[360px] md:h-[420px] rounded"
             />
 
-            {effectsEnabled && (
+            {effectsEnabled && !accessibilityEnabled && (
               <>
                 {crtScanlines && (
                   <div className="pointer-events-none absolute inset-0 rounded bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.18),rgba(0,0,0,0.18)_1px,transparent_1px,transparent_3px)] opacity-80" />
                 )}
                 {crtInnerGlow && (
-                  <div className="pointer-events-none absolute inset-0 rounded shadow-[inset_0_0_90px_rgba(0,255,65,0.08)]" />
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded"
+                    style={{ boxShadow: "inset 0 0 90px var(--crt-screen-glow)" }}
+                  />
                 )}
                 {crtFlicker && (
                   <div className="pointer-events-none absolute inset-0 rounded bg-primary/3 animate-[flickerLocal_1.8s_infinite]" />
                 )}
                 {crtVignette && (
-                  <div className="pointer-events-none absolute inset-0 rounded bg-[radial-gradient(circle_at_50%_45%,rgba(0,255,65,0.06),rgba(0,0,0,0.55)_70%,rgba(0,0,0,0.78))] mix-blend-multiply" />
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded mix-blend-multiply"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 50% 45%, rgba(var(--crt-rgb),0.06), rgba(0,0,0,0.55) 70%, rgba(0,0,0,0.78))",
+                    }}
+                  />
                 )}
               </>
             )}
@@ -305,10 +317,10 @@ export function AstronautLogoLab() {
                   transparentBG
                 );
               }}
-              className="px-3 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary hover:shadow-[0_0_10px_rgba(0,255,65,0.35)] transition-all text-xs tracking-widest"
+              className="px-3 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow-soft transition-all text-xs tracking-widest"
               style={{
                 boxShadow:
-                  "inset -2px -2px 0px rgba(0,255,65,0.18), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                  "inset -2px -2px 0px var(--crt-inset-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
               }}
             >
               EXPORT PNG
@@ -319,7 +331,7 @@ export function AstronautLogoLab() {
               className="px-3 py-2 border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all text-xs tracking-widest"
               style={{
                 boxShadow:
-                  "inset -2px -2px 0px rgba(0,255,65,0.12), inset 2px 2px 0px rgba(0,0,0,0.65)",
+                  "inset -2px -2px 0px var(--crt-focus-soft), inset 2px 2px 0px rgba(0,0,0,0.65)",
               }}
             >
               RESET
@@ -353,7 +365,7 @@ export function AstronautLogoLab() {
                     onClick={() => applyPreset(id)}
                     className={`px-3 py-2 rounded border transition-all text-xs tracking-widest ${
                       active
-                        ? "border-primary bg-primary/15 text-primary shadow-[0_0_10px_rgba(0,255,65,0.25)]"
+                        ? "border-primary bg-primary/15 text-primary crt-glow-selected"
                         : "border-primary/20 bg-background/40 text-muted-foreground hover:border-primary/60 hover:text-primary"
                     }`}
                   >
@@ -487,7 +499,7 @@ export function AstronautLogoLab() {
                   className={`w-full px-3 py-2 rounded border transition-all text-xs tracking-widest ${
                     walkDir === 1
                       ? "border-primary/20 bg-background/40 text-muted-foreground hover:border-primary/60 hover:text-primary"
-                      : "border-primary bg-primary/15 text-primary shadow-[0_0_10px_rgba(0,255,65,0.2)]"
+                      : "border-primary bg-primary/15 text-primary crt-glow-selected"
                   }`}
                 >
                   {walkDir === 1 ? "-- WALK: RIGHT" : "> WALK: LEFT"}
@@ -675,7 +687,7 @@ export function AstronautLogoLab() {
                       onClick={() => setTransparentBG((v) => !v)}
                       className={`w-full px-3 py-2 rounded border transition-all text-xs tracking-widest ${
                         transparentBG
-                          ? "border-primary bg-primary/15 text-primary shadow-[0_0_10px_rgba(0,255,65,0.2)]"
+                          ? "border-primary bg-primary/15 text-primary crt-glow-selected"
                           : "border-primary/20 bg-background/40 text-muted-foreground hover:border-primary/60 hover:text-primary"
                       }`}
                     >

@@ -35,7 +35,7 @@ function RetroToggle({
       title={accessibleLabel}
       onClick={() => onChange(!value)}
       className={`
-        inline-flex h-11
+        inline-flex h-12 w-full min-w-0 2xl:w-36
         items-center justify-between gap-3
         px-3 rounded border
         transition-all duration-150
@@ -47,11 +47,11 @@ function RetroToggle({
           "inset -1px -1px 2px rgba(0,0,0,0.8), inset 1px 1px 2px rgba(255,255,255,0.04)",
       }}
     >
-      <span className="text-sm tracking-widest text-muted-foreground whitespace-nowrap">
+      <span className="min-w-0 truncate text-xs sm:text-sm tracking-widest text-muted-foreground">
         {label}
       </span>
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <span className="relative w-9 h-5 rounded-sm border border-[var(--crt-toggle-track-border)] bg-[var(--crt-toggle-track)] px-0.5">
           <span
             className={`
@@ -135,8 +135,8 @@ export function RetroNavigation({
   return (
     <div className="mb-8">
       <nav className="border-2 border-primary/40 bg-card/50 p-2 rounded crt-glow-soft">
-        <div className="grid gap-2 md:gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div className="grid gap-2 grid-cols-[auto_repeat(2,minmax(0,1fr))] sm:grid-cols-[auto_repeat(3,minmax(0,1fr))] xl:grid-cols-[auto_repeat(6,minmax(0,1fr))]">
+        <div className="grid gap-2 md:gap-3 2xl:grid-cols-[1fr_auto] 2xl:items-center">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-[auto_repeat(6,minmax(0,1fr))]">
             <button
               ref={terminalButtonRef}
               type="button"
@@ -145,8 +145,9 @@ export function RetroNavigation({
               title="Open terminal"
               onClick={onOpenTerminal}
               className={`
-                h-11 w-11
-                flex items-center justify-center
+                h-12 w-full
+                flex items-center justify-center gap-2
+                px-3 xl:h-11 xl:w-11 xl:px-0
                 border-2 transition-all duration-100
                 ${
                   terminalOpen
@@ -156,6 +157,7 @@ export function RetroNavigation({
               `}
             >
               <Terminal className="h-5 w-5 shrink-0" />
+              <span className="whitespace-nowrap xl:sr-only">TERM</span>
             </button>
 
             {navItems.map((item) => {
@@ -168,9 +170,9 @@ export function RetroNavigation({
                   type="button"
                   onClick={() => handleTabClick(item.id)}
                   className={`
-                    w-full h-11
+                    w-full h-12 xl:h-11
                     flex items-center justify-center gap-2
-                    px-4
+                    px-3 sm:px-4
                     border-2 transition-all duration-100
                     ${
                       isActive
@@ -180,13 +182,13 @@ export function RetroNavigation({
                   `}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
-                  <span className="whitespace-nowrap">{item.label}</span>
+                  <span className="whitespace-nowrap text-xs sm:text-sm">{item.label}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(8.5rem,1fr))] gap-2 2xl:flex 2xl:flex-nowrap 2xl:justify-end">
             <RetroToggle
               label="SOUND"
               value={soundEnabled}
@@ -211,7 +213,7 @@ export function RetroNavigation({
 
             <RetroToggle
               label="A11Y"
-              title="Accessibility high contrast"
+              title="Accessibility high contrast and reduced motion"
               value={accessibilityEnabled}
               onChange={(v) => {
                 if (soundEnabled) playSound("BUTTON", 0.95);
