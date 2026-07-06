@@ -1,23 +1,31 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Terminal as TerminalIcon } from "lucide-react";
 
 import type { TabId } from "./RetroNavigation";
 import { useUI } from "../store/ui";
 import { getCrtPalette } from "../utils/crtTheme";
-import { playSoundAsync } from "../utils/sfx";
+import { playSoundAsync, primeAudio, startHoverNoise, stopHoverNoise } from "../utils/sfx";
+import { HOME_BOOT_TRANSCRIPT_LINES } from "./homeBootSequence";
 
 type TerminalOverlayProps = {
   open: boolean;
   activeTab: TabId;
   onClose: () => void;
   onNavigate: (tab: TabId) => void;
+  variant?: "overlay" | "inline";
 };
 
 type TerminalLineKind = "input" | "output" | "error" | "system";
 
 type TerminalLine = {
   id: number;
+  text: string;
+  kind: TerminalLineKind;
+};
+
+type TerminalSeedLine = {
   text: string;
   kind: TerminalLineKind;
 };
@@ -69,6 +77,34 @@ const REBOOT_SEQUENCE = [
   "starting HOME target...",
   "READY | type help",
 ];
+
+const DEFAULT_TERMINAL_SEED: TerminalSeedLine[] = [
+  { text: "FL97-MO VIRTUAL TERMINAL", kind: "system" },
+  { text: "type help", kind: "output" },
+];
+
+function initialTerminalSeed(includeHomeBoot: boolean): TerminalSeedLine[] {
+  if (!includeHomeBoot) return DEFAULT_TERMINAL_SEED;
+
+  return [
+    { text: "FL97-MO VIRTUAL TERMINAL", kind: "system" },
+    ...HOME_BOOT_TRANSCRIPT_LINES,
+    { text: "type help | clear to wipe this session", kind: "output" },
+  ];
+}
+
+function buildTerminalLines(seed: TerminalSeedLine[]) {
+  let id = 1;
+  const lines: TerminalLine[] = [];
+
+  for (const line of seed) {
+    for (const row of line.text.split("\n")) {
+      lines.push({ id: id++, text: row, kind: line.kind });
+    }
+  }
+
+  return { lines, nextId: id };
+}
 
 const ROOT_ENTRIES = [
   "ABOUT.TXT",
@@ -608,11 +644,18 @@ function usePrefersReducedMotion() {
   return reducedMotion;
 }
 
-export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: TerminalOverlayProps) {
+export function TerminalOverlay({
+  open,
+  activeTab,
+  onClose,
+  onNavigate,
+  variant = "overlay",
+}: TerminalOverlayProps) {
   const {
     soundEnabled,
     effectsEnabled,
     accessibilityEnabled,
+    homeRevealDone,
     resetIntroForSession,
     eqQueue,
     eqActiveId,
@@ -621,6 +664,7 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
     setEqActiveId,
   } = useUI();
 
+  const isInline = variant === "inline";
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -634,17 +678,20 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
   const matrixRafRef = useRef<number | null>(null);
   const rebootTimersRef = useRef<number[]>([]);
   const pointerDownInsideRef = useRef(false);
-  const lineIdRef = useRef(3);
+  const initialLinesRef = useRef<{ lines: TerminalLine[]; nextId: number } | null>(null);
+  if (initialLinesRef.current === null) {
+    initialLinesRef.current = buildTerminalLines(initialTerminalSeed(homeRevealDone));
+  }
+  const lineIdRef = useRef(initialLinesRef.current.nextId);
+  const terminalTouchedRef = useRef(false);
+  const homeBootTranscriptLoadedRef = useRef(homeRevealDone);
 
   const [cwd, setCwd] = useState(ROOT_CWD);
   const [input, setInput] = useState("");
   const [rebooting, setRebooting] = useState(false);
   const [mowerActive, setMowerActive] = useState(false);
   const [matrixActive, setMatrixActive] = useState(false);
-  const [lines, setLines] = useState<TerminalLine[]>([
-    { id: 1, text: "FL97-MO VIRTUAL TERMINAL", kind: "system" },
-    { id: 2, text: "type help", kind: "output" },
-  ]);
+  const [lines, setLines] = useState<TerminalLine[]>(initialLinesRef.current.lines);
 
   const motionDisabled = !effectsEnabled || accessibilityEnabled || prefersReducedMotion;
   const eqActiveLabel = useMemo(() => {
@@ -766,6 +813,15 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
   }, [open]);
 
   useEffect(() => {
+    if (!homeRevealDone || homeBootTranscriptLoadedRef.current || terminalTouchedRef.current) return;
+
+    const next = buildTerminalLines(initialTerminalSeed(true));
+    lineIdRef.current = next.nextId;
+    homeBootTranscriptLoadedRef.current = true;
+    setLines(next.lines);
+  }, [homeRevealDone]);
+
+  useEffect(() => {
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -782,6 +838,7 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
 
   useEffect(() => {
     return () => {
+      stopHoverNoise();
       if (mowerTimerRef.current !== null) window.clearTimeout(mowerTimerRef.current);
       if (mowerRafRef.current !== null) window.cancelAnimationFrame(mowerRafRef.current);
       if (matrixTimerRef.current !== null) window.clearTimeout(matrixTimerRef.current);
@@ -939,6 +996,8 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
     setInput("");
     if (!command || rebooting) return;
 
+    terminalTouchedRef.current = true;
+
     if (soundEnabled) void playSoundAsync("TERM", 0.08, 1.05).catch(() => {});
 
     if (command.toLowerCase() === "reboot") {
@@ -969,26 +1028,50 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
     return "text-muted-foreground";
   };
 
+  const startInlineHeaderHoverNoise = () => {
+    if (!isInline || !soundEnabled) return;
+    void primeAudio(["NOISE"])
+      .then(() => startHoverNoise())
+      .catch(() => {});
+  };
+
+  const collapseInlineTerminal = () => {
+    if (!isInline) return;
+    stopHoverNoise();
+    if (soundEnabled) void playSoundAsync("TERM", 0.12, 0.96, 120).catch(() => {});
+    onClose();
+  };
+
   if (!open) return null;
 
-  return (
-    <div
-      className="fixed inset-0 z-[80] flex items-start justify-center bg-black/45 p-3 sm:p-6 md:p-8"
-      onPointerDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      {mowerActive && (
-        <canvas ref={mowerCanvasRef} className="pointer-events-none fixed inset-0 z-[95]" aria-hidden="true" />
-      )}
+  const inputId = isInline ? "terminal-input-inline" : "terminal-input-overlay";
+  const terminalHeaderTitle = (
+    <div className="flex min-w-0 items-center gap-2 text-primary">
+      <TerminalIcon className="h-5 w-5 shrink-0" />
+      <span className="truncate tracking-widest">fl97-mo@portfolio:{cwd}</span>
+    </div>
+  );
+  const mowerCanvasPortal =
+    mowerActive && typeof document !== "undefined"
+      ? createPortal(
+          <canvas
+            ref={mowerCanvasRef}
+            className="pointer-events-none fixed inset-0 z-[95]"
+            aria-hidden="true"
+          />,
+          document.body
+        )
+      : null;
 
+  const terminalPanel = (
+    <>
       <div
         ref={panelRef}
-        role="dialog"
-        aria-modal="true"
+        role={isInline ? "region" : "dialog"}
+        aria-modal={isInline ? undefined : true}
         aria-label="Fake portfolio terminal"
         tabIndex={-1}
-        onBlur={handlePanelBlur}
+        onBlur={isInline ? undefined : handlePanelBlur}
         onPointerDownCapture={() => {
           pointerDownInsideRef.current = true;
         }}
@@ -1000,23 +1083,39 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
         onPointerCancelCapture={() => {
           pointerDownInsideRef.current = false;
         }}
-        className="mt-3 flex h-[min(78vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded border-2 border-primary/60 bg-background/90 crt-glow-overlay sm:mt-6"
+        className={
+          isInline
+            ? "flex h-full w-full flex-col overflow-hidden rounded bg-background/90"
+            : "mt-3 flex h-[min(78vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded border-2 border-primary/60 bg-background/90 crt-glow-overlay sm:mt-6"
+        }
       >
-        <div className="flex items-center justify-between gap-3 border-b border-primary/30 bg-card/80 px-3 py-2">
-          <div className="flex min-w-0 items-center gap-2 text-primary">
-            <TerminalIcon className="h-5 w-5 shrink-0" />
-            <span className="truncate tracking-widest">fl97-mo@portfolio:{cwd}</span>
-          </div>
-
+        {isInline ? (
           <button
             type="button"
-            onClick={onClose}
-            className="shrink-0 rounded border border-primary/40 bg-background/60 px-3 py-1 text-primary hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-            aria-label="Close terminal"
+            onClick={collapseInlineTerminal}
+            onMouseEnter={startInlineHeaderHoverNoise}
+            onMouseLeave={stopHoverNoise}
+            onFocus={startInlineHeaderHoverNoise}
+            onBlur={stopHoverNoise}
+            className="flex w-full items-center justify-between gap-3 border-b border-primary/30 bg-card/80 px-3 py-2 text-left transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            aria-label="Collapse terminal"
           >
-            [X]
+            {terminalHeaderTitle}
           </button>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 border-b border-primary/30 bg-card/80 px-3 py-2">
+            {terminalHeaderTitle}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded border border-primary/40 bg-background/60 px-3 py-1 text-primary hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+              aria-label="Close terminal"
+            >
+              [X]
+            </button>
+          </div>
+        )}
 
         <div className="relative min-h-0 flex-1 overflow-hidden">
           {matrixActive && (
@@ -1050,13 +1149,13 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
             </div>
 
             <form onSubmit={handleSubmit} className="mt-0 flex min-w-0 items-baseline gap-2">
-              <label htmlFor="terminal-input" className="sr-only">
+              <label htmlFor={inputId} className="sr-only">
                 Terminal command
               </label>
               <span className="shrink-0 whitespace-pre text-sm leading-6 text-primary">{cwd} $</span>
               <input
                 ref={inputRef}
-                id="terminal-input"
+                id={inputId}
                 value={input}
                 maxLength={MAX_INPUT_LENGTH}
                 disabled={rebooting}
@@ -1070,6 +1169,27 @@ export function TerminalOverlay({ open, activeTab, onClose, onNavigate }: Termin
           </div>
         </div>
       </div>
+    </>
+  );
+
+  if (isInline) {
+    return (
+      <>
+        {mowerCanvasPortal}
+        <div className="h-full w-full">{terminalPanel}</div>
+      </>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-start justify-center bg-black/45 p-3 sm:p-6 md:p-8"
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      {mowerCanvasPortal}
+      {terminalPanel}
     </div>
   );
 }

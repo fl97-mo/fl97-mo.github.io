@@ -7,25 +7,19 @@ import { ContactSection } from "./ContactSection";
 import { HomeModuleLoader } from "./HomeModuleLoader";
 import { ProjectsSection } from "./ProjectsSection";
 import { SkillsSection } from "./SkillsSection";
+import type { TabId } from "./RetroNavigation";
+import { HOME_BOOT_MODULE_NAMES, HOME_BOOT_MODULES } from "./homeBootSequence";
 
 type HomeContentRevealProps = {
   instant?: boolean;
+  activeTab: TabId;
   onDone?: () => void;
   onFooterMounted?: () => void;
+  onNavigate: (tab: TabId) => void;
   onOpenSystems: (slug: string) => void;
 };
 
-const HOME_MODULES = [
-  { name: "ABOUT.TXT", kind: "about" },
-  { name: "STACK.DAT", kind: "skills" },
-  { name: "PROJECTS.DIR", kind: "projects" },
-  { name: "CONTACT.SYS", kind: "contact" },
-  { name: "HEADER.NAV", kind: "navigation" },
-  { name: "FOOTER.NAV", kind: "footer" },
-];
-
-const MODULE_NAMES = HOME_MODULES.map((module) => module.name);
-const moduleIndex = (kind: string) => HOME_MODULES.findIndex((module) => module.kind === kind);
+const moduleIndex = (kind: string) => HOME_BOOT_MODULES.findIndex((module) => module.kind === kind);
 const FOOTER_MODULE_INDEX = moduleIndex("footer");
 
 const MODULE_STEP_MS = 700;
@@ -56,8 +50,10 @@ function usePrefersReducedMotion() {
 
 export function HomeContentReveal({
   instant = false,
+  activeTab,
   onDone,
   onFooterMounted,
+  onNavigate,
   onOpenSystems,
 }: HomeContentRevealProps) {
   const { effectsEnabled, accessibilityEnabled } = useUI();
@@ -67,7 +63,7 @@ export function HomeContentReveal({
     skipSessionSequenceRef.current || !effectsEnabled || accessibilityEnabled || prefersReducedMotion;
 
   const [visibleCount, setVisibleCount] = useState(
-    shouldSkipSequence ? HOME_MODULES.length : 0
+    shouldSkipSequence ? HOME_BOOT_MODULES.length : 0
   );
   const [loaderDone, setLoaderDone] = useState(shouldSkipSequence);
   const [bootDone, setBootDone] = useState(shouldSkipSequence);
@@ -84,7 +80,7 @@ export function HomeContentReveal({
 
   useEffect(() => {
     if (shouldSkipSequence) {
-      setVisibleCount(HOME_MODULES.length);
+      setVisibleCount(HOME_BOOT_MODULES.length);
       setLoaderDone(true);
       setBootDone(true);
       onDoneRef.current?.();
@@ -100,7 +96,7 @@ export function HomeContentReveal({
     setVisibleCount(0);
     setLoaderDone(false);
 
-    HOME_MODULES.forEach((_module, index) => {
+    HOME_BOOT_MODULES.forEach((_module, index) => {
       timers.push(
         window.setTimeout(() => {
           setVisibleCount(index + 1);
@@ -112,7 +108,7 @@ export function HomeContentReveal({
       window.setTimeout(() => {
         setLoaderDone(true);
         onDoneRef.current?.();
-      }, MODULE_START_DELAY_MS + (HOME_MODULES.length - 1) * MODULE_STEP_MS + SEQUENCE_DONE_DELAY_MS)
+      }, MODULE_START_DELAY_MS + (HOME_BOOT_MODULES.length - 1) * MODULE_STEP_MS + SEQUENCE_DONE_DELAY_MS)
     );
 
     return () => {
@@ -140,10 +136,12 @@ export function HomeContentReveal({
   return (
     <>
       <HomeModuleLoader
-        modules={MODULE_NAMES}
+        modules={HOME_BOOT_MODULE_NAMES}
         mountedCount={visibleCount}
         complete={loaderDone || shouldSkipSequence}
         animated={!shouldSkipSequence}
+        activeTab={activeTab}
+        onNavigate={onNavigate}
         onBootDone={() => setBootDone(true)}
       />
 

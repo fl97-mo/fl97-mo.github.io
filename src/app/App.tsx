@@ -122,21 +122,28 @@ export default function App() {
     chromeHasRevealedRef.current = true;
     setFooterVisible(true);
   }, []);
+  const chromeInstant = !effectsEnabled || accessibilityEnabled;
 
   return (
     <CRTScreen>
       <TypewriterCursorProvider>
         <div
           aria-hidden={!navigationVisible}
-          className={navigationVisible ? "home-chrome-reveal" : "hidden"}
+          className={`home-nav-reveal-shell ${navigationVisible ? "is-visible" : ""} ${
+            chromeInstant ? "is-instant" : ""
+          }`}
         >
-          <RetroNavigation
-            activeTab={activeTab}
-            onChange={navigateToTab}
-            onOpenTerminal={openTerminal}
-            terminalButtonRef={terminalButtonRef}
-            terminalOpen={terminalOpen}
-          />
+          <div className="min-h-0 overflow-hidden">
+            {navigationVisible && (
+              <RetroNavigation
+                activeTab={activeTab}
+                onChange={navigateToTab}
+                onOpenTerminal={openTerminal}
+                terminalButtonRef={terminalButtonRef}
+                terminalOpen={terminalOpen}
+              />
+            )}
+          </div>
         </div>
 
         <main className="min-w-0 flex-1">
@@ -147,8 +154,10 @@ export default function App() {
               {introDone && (
                 <HomeContentReveal
                   instant={homeRevealDone}
+                  activeTab={activeTab}
                   onDone={markHomeRevealDone}
                   onFooterMounted={revealFooter}
+                  onNavigate={navigateToTab}
                   onOpenSystems={(slug) => {
                     setSystemsTargetSlug(slug);
                     setActiveTab("systems");
