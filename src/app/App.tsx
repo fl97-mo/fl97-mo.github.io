@@ -1,13 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CRTScreen } from "./components/CRTScreen";
 import { RetroNavigation, TabId } from "./components/RetroNavigation";
 
 import { TerminalHeader } from "./components/TerminalHeader";
-import { AboutSection } from "./components/AboutSection";
-import { SkillsSection } from "./components/SkillsSection";
-import { ProjectsSection } from "./components/ProjectsSection";
-import { ContactSection } from "./components/ContactSection";
+import { HomeContentReveal } from "./components/HomeContentReveal";
 
 import { SystemsPage } from "./components/SystemsPage";
 import { CodingPage } from "./components/CodingPage";
@@ -30,7 +27,19 @@ export default function App() {
   const primedRef = useRef(false);
   const terminalButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  const { introDone, markIntroDone, effectsEnabled, soundEnabled } = useUI();
+  const {
+    introDone,
+    homeRevealDone,
+    accessibilityEnabled,
+    markIntroDone,
+    markHomeRevealDone,
+    effectsEnabled,
+    soundEnabled,
+  } = useUI();
+
+  const chromeHasRevealedRef = useRef(homeRevealDone);
+  const [navigationVisible, setNavigationVisible] = useState(homeRevealDone);
+  const [footerVisible, setFooterVisible] = useState(homeRevealDone);
 
   useEffect(() => {
     const handler = async () => {
@@ -64,6 +73,31 @@ export default function App() {
     if (!effectsEnabled && !introDone) markIntroDone();
   }, [effectsEnabled, introDone, markIntroDone]);
 
+  useEffect(() => {
+    if (!homeRevealDone) {
+      chromeHasRevealedRef.current = false;
+      setNavigationVisible(false);
+      setFooterVisible(false);
+      return;
+    }
+
+    if (chromeHasRevealedRef.current || !effectsEnabled || accessibilityEnabled) {
+      chromeHasRevealedRef.current = true;
+      setNavigationVisible(true);
+      setFooterVisible(true);
+      return;
+    }
+
+    setNavigationVisible(true);
+
+    const footerTimer = window.setTimeout(() => {
+      chromeHasRevealedRef.current = true;
+      setFooterVisible(true);
+    }, 360);
+
+    return () => window.clearTimeout(footerTimer);
+  }, [accessibilityEnabled, effectsEnabled, homeRevealDone]);
+
   const navigateToTab = (tab: TabId) => {
     setActiveTab(tab);
     if (tab !== "systems") setSystemsTargetSlug(null);
@@ -84,57 +118,72 @@ export default function App() {
     setTerminalOpen(true);
   };
 
+  const revealFooter = useCallback(() => {
+    chromeHasRevealedRef.current = true;
+    setFooterVisible(true);
+  }, []);
+
   return (
     <CRTScreen>
       <TypewriterCursorProvider>
-        <RetroNavigation
-          activeTab={activeTab}
-          onChange={navigateToTab}
-          onOpenTerminal={openTerminal}
-          terminalButtonRef={terminalButtonRef}
-          terminalOpen={terminalOpen}
-        />
+        <div
+          aria-hidden={!navigationVisible}
+          className={navigationVisible ? "home-chrome-reveal" : "hidden"}
+        >
+          <RetroNavigation
+            activeTab={activeTab}
+            onChange={navigateToTab}
+            onOpenTerminal={openTerminal}
+            terminalButtonRef={terminalButtonRef}
+            terminalOpen={terminalOpen}
+          />
+        </div>
 
-        {activeTab === "home" && (
-          <>
-            <TerminalHeader introAlreadyDone={introDone} onIntroDone={markIntroDone} />
+        <main className="min-w-0 flex-1">
+          {activeTab === "home" && (
+            <>
+              <TerminalHeader introAlreadyDone={introDone} onIntroDone={markIntroDone} />
 
-            {introDone && (
-              <>
-                <AboutSection />
-                <SkillsSection />
-                <ProjectsSection
+              {introDone && (
+                <HomeContentReveal
+                  instant={homeRevealDone}
+                  onDone={markHomeRevealDone}
+                  onFooterMounted={revealFooter}
                   onOpenSystems={(slug) => {
                     setSystemsTargetSlug(slug);
                     setActiveTab("systems");
                   }}
                 />
-                <ContactSection />
-              </>
-            )}
-          </>
-        )}
+              )}
+            </>
+          )}
 
-        {activeTab === "systems" && (
-          <SystemsPage
-            initialOpenSlug={systemsTargetSlug}
-            onConsumedInitialOpen={() => setSystemsTargetSlug(null)}
-          />
-        )}
+          {activeTab === "systems" && (
+            <SystemsPage
+              initialOpenSlug={systemsTargetSlug}
+              onConsumedInitialOpen={() => setSystemsTargetSlug(null)}
+            />
+          )}
 
-        {activeTab === "coding" && <CodingPage />}
-        {activeTab === "music" && <MusicPage onOpenEQ={() => setActiveTab("eq")} />}
-        {activeTab === "eq" && <EqualizerPage />}
+          {activeTab === "coding" && <CodingPage />}
+          {activeTab === "music" && <MusicPage onOpenEQ={() => setActiveTab("eq")} />}
+          {activeTab === "eq" && <EqualizerPage />}
 
-        {activeTab === "astronaut" && <AstronautLogoLab />}
+          {activeTab === "astronaut" && <AstronautLogoLab />}
 
-        {activeTab === "imprint" && <INFOPage />}
-        {activeTab === "privacy" && <PrivacyPage />}
+          {activeTab === "imprint" && <INFOPage />}
+          {activeTab === "privacy" && <PrivacyPage />}
+        </main>
 
-        <footer className="mt-12 pt-6 border-t border-primary/30 text-center text-muted-foreground">
+        <footer
+          aria-hidden={!footerVisible}
+          className={`mt-12 pt-6 border-t border-primary/30 text-center text-muted-foreground ${
+            footerVisible ? "home-chrome-reveal" : "invisible"
+          }`}
+        >
           <p className="flex items-center justify-center gap-2">
             <span className="text-primary">{">"}</span>
-            <span>© 2025 PRIVATE PROJECT | SYSTEM VERSION 1.0.0</span>
+            <span>{"\u00a9"} 2025 PRIVATE PROJECT | SYSTEM VERSION 1.0.0</span>
           </p>
 
           <p className="mt-2 text-sm">Running on FLUX CAPACITOR | BUILD 0012231</p>

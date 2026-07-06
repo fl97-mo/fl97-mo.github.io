@@ -30,12 +30,14 @@ type UIState = {
   effectsEnabled: boolean;
   accessibilityEnabled: boolean;
   introDone: boolean;
+  homeRevealDone: boolean;
 
   setSoundEnabled: (v: boolean) => void;
   setEffectsEnabled: (v: boolean) => void;
   setAccessibilityEnabled: (v: boolean) => void;
 
   markIntroDone: () => void;
+  markHomeRevealDone: () => void;
   resetIntroForSession: () => void;
 
   eqQueue: EqTrack[];
@@ -56,6 +58,7 @@ const SS_SOUND = "ui.soundEnabled.session";
 const SS_EFFECTS = "ui.effectsEnabled.session";
 const SS_ACCESSIBILITY = "ui.accessibilityEnabled.session";
 const SS_INTRO_DONE = "ui.introDone.session";
+const SS_HOME_REVEAL_DONE = "ui.homeRevealDone.session";
 
 const SS_EQ_ACTIVE = "ui.eqActiveId.session";
 const SS_EQ_REPEAT = "ui.eqRepeat.session";
@@ -95,10 +98,22 @@ function writeStrToSessionStorage(key: string, value: string | null) {
 const DEFAULT_EQ_QUEUE: EqTrack[] = [];
 
 export function UIProvider({ children }: { children: ReactNode }) {
-  const [soundEnabled, setSoundEnabledState] = useState(false);
-  const [effectsEnabled, setEffectsEnabledState] = useState(true);
-  const [accessibilityEnabled, setAccessibilityEnabledState] = useState(false);
-  const [introDone, setIntroDone] = useState(false);
+  const [soundEnabled, setSoundEnabledState] = useState(() =>
+    readBoolFromSessionStorage(SS_SOUND, false)
+  );
+  const [effectsEnabled, setEffectsEnabledState] = useState(() =>
+    readBoolFromSessionStorage(SS_EFFECTS, true)
+  );
+  const [accessibilityEnabled, setAccessibilityEnabledState] = useState(() =>
+    readBoolFromSessionStorage(SS_ACCESSIBILITY, false)
+  );
+  const [introDone, setIntroDone] = useState(() =>
+    readBoolFromSessionStorage(SS_INTRO_DONE, false)
+  );
+  const [homeRevealDone, setHomeRevealDone] = useState(() => {
+    const id = readBoolFromSessionStorage(SS_INTRO_DONE, false);
+    return id && readBoolFromSessionStorage(SS_HOME_REVEAL_DONE, false);
+  });
 
   const [eqQueue, setEqQueueState] = useState<EqTrack[]>(DEFAULT_EQ_QUEUE);
 
@@ -122,11 +137,13 @@ export function UIProvider({ children }: { children: ReactNode }) {
     const ee = readBoolFromSessionStorage(SS_EFFECTS, true);
     const ae = readBoolFromSessionStorage(SS_ACCESSIBILITY, false);
     const id = readBoolFromSessionStorage(SS_INTRO_DONE, false);
+    const hrd = id && readBoolFromSessionStorage(SS_HOME_REVEAL_DONE, false);
 
     setSoundEnabledState(se);
     setEffectsEnabledState(ee);
     setAccessibilityEnabledState(ae);
     setIntroDone(id);
+    setHomeRevealDone(hrd);
 
     if (se) {
       primeAudio(["TERM", "BTN_MECH", "STATIC", "TYPING"])
@@ -176,9 +193,16 @@ export function UIProvider({ children }: { children: ReactNode }) {
     writeBoolToSessionStorage(SS_INTRO_DONE, true);
   }, []);
 
+  const markHomeRevealDone = useCallback(() => {
+    setHomeRevealDone(true);
+    writeBoolToSessionStorage(SS_HOME_REVEAL_DONE, true);
+  }, []);
+
   const resetIntroForSession = useCallback(() => {
     setIntroDone(false);
+    setHomeRevealDone(false);
     writeBoolToSessionStorage(SS_INTRO_DONE, false);
+    writeBoolToSessionStorage(SS_HOME_REVEAL_DONE, false);
   }, []);
 
   const setEqQueue = useCallback((q: EqTrack[]) => {
@@ -237,10 +261,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
       effectsEnabled,
       accessibilityEnabled,
       introDone,
+      homeRevealDone,
       setSoundEnabled,
       setEffectsEnabled,
       setAccessibilityEnabled,
       markIntroDone,
+      markHomeRevealDone,
       resetIntroForSession,
 
       eqQueue,
@@ -258,10 +284,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
       effectsEnabled,
       accessibilityEnabled,
       introDone,
+      homeRevealDone,
       setSoundEnabled,
       setEffectsEnabled,
       setAccessibilityEnabled,
       markIntroDone,
+      markHomeRevealDone,
       resetIntroForSession,
       eqQueue,
       eqActiveId,

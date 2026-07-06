@@ -88,7 +88,7 @@ export function TypewriterText({
   startDelayMs = 0,
   className = "",
   showCursor = true,
-  cursorChar = "█",
+  cursorChar = "\u2588",
   as = "div",
   onDone,
 }: {
@@ -98,7 +98,7 @@ export function TypewriterText({
   className?: string;
   showCursor?: boolean;
   cursorChar?: string;
-  as?: "div" | "pre";
+  as?: "div" | "pre" | "span";
   onDone?: () => void;
 }) {
   const prefersReduced = usePrefersReducedMotion();
