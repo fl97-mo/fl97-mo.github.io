@@ -9,6 +9,8 @@ import { getCrtPalette } from "../utils/crtTheme";
 import { playSoundAsync, primeAudio, startHoverNoise, stopHoverNoise } from "../utils/sfx";
 import { useFocusTrap } from "../utils/useFocusTrap";
 import { HOME_BOOT_TRANSCRIPT_LINES } from "./homeBootSequence";
+import { drawEqAstronaut } from "./lab/drawEqAstronaut";
+import { DEFAULT_RIG, type RenderParams } from "./lab/types";
 
 type TerminalOverlayProps = {
   open: boolean;
@@ -45,6 +47,7 @@ type TerminalCommandContext = {
   navigate: (tab: TabId) => void;
   triggerMower: () => void;
   triggerMatrix: () => void;
+  triggerAstroTrance: () => void;
   openColorPicker: () => void;
   activeTab: TabId;
   soundEnabled: boolean;
@@ -71,6 +74,10 @@ const MAX_HISTORY_LINES = 100;
 const MOWER_DURATION_MS = 6450;
 const MOWER_ROWS = 20;
 const MATRIX_DURATION_MS = 4600;
+const ASTROTRANCE_DURATION_MS = 14000;
+const ASTROTRANCE_BPM = 128;
+const ASTROTRANCE_BEAT_MS = 60000 / ASTROTRANCE_BPM;
+const ASTROTRANCE_AUDIO_SRC = `${import.meta.env.BASE_URL}astrotrance.mp3`;
 const REBOOT_STEP_MS = 560;
 
 const REBOOT_SEQUENCE = [
@@ -221,8 +228,13 @@ function yesNo(value: boolean) {
   return value ? "ON" : "OFF";
 }
 
-function animationBlockedMessage(commandName: string, ctx: TerminalCommandContext) {
+function animationBlockedMessage(
+  commandName: string,
+  ctx: TerminalCommandContext,
+  options: { requireSound?: boolean } = {}
+) {
   const reasons: string[] = [];
+  if (options.requireSound && !ctx.soundEnabled) reasons.push("sound turned off");
   if (!ctx.effectsEnabled) reasons.push("effects turned off");
   if (ctx.accessibilityEnabled) reasons.push("a11y turned on");
 
@@ -481,6 +493,29 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
     },
   },
   {
+    name: "astrotrance",
+    usage: "astrotrance",
+    description: "run a 14s 128 BPM astronaut rave",
+    aliases: ["rave"],
+    run: (_args, ctx) => {
+      if (!ctx.soundEnabled || ctx.motionDisabled) {
+        return {
+          output: [animationBlockedMessage("astrotrance.exe", ctx, { requireSound: true })],
+          kind: "error",
+        };
+      }
+
+      ctx.triggerAstroTrance();
+      return {
+        output: [
+          `astrotrance.exe started | ${ASTROTRANCE_BPM} BPM | sound: ${
+            ctx.soundEnabled ? "astrotrance.mp3" : "off"
+          }`,
+        ],
+      };
+    },
+  },
+  {
     name: "flux",
     usage: "flux",
     description: "check capacitor status",
@@ -686,6 +721,116 @@ function drawMatrixRain(
   }
 }
 
+function drawAstroTrance(ctx: CanvasRenderingContext2D, width: number, height: number, elapsedMs: number) {
+  const crt = getCrtPalette();
+  const beat = elapsedMs / ASTROTRANCE_BEAT_MS;
+  const beatIndex = Math.floor(beat);
+  const beatPhase = beat - beatIndex;
+  const beatPulse = Math.pow(1 - beatPhase, 3);
+  const fade = Math.max(0, Math.min(1, 1 - Math.max(0, elapsedMs - ASTROTRANCE_DURATION_MS + 760) / 760));
+  const t = elapsedMs * 0.001;
+  const base = Math.min(width, height);
+  const px = Math.max(1, base / 520);
+  const groove = Math.sin(beat * Math.PI * 2);
+  const shoulderGroove = Math.sin(beat * Math.PI * 4 + 0.45);
+
+  const params: RenderParams = {
+    preset: "front",
+    seed: 97,
+    bodyYaw: groove * 0.12 + shoulderGroove * 0.04,
+    lookYaw: Math.sin(beat * Math.PI * 0.5 + 0.6) * 0.1,
+    lookPitch: -0.04 + Math.sin(beat * Math.PI * 2 + 0.35) * 0.055,
+    motion: 1,
+    phase: beat * Math.PI * 2,
+    walkDir: 1,
+    crouch: beatPulse * 0.16 + (0.5 + 0.5 * groove) * 0.035,
+    hang: Math.max(0, shoulderGroove) * 0.08,
+    pullDir: Math.sin(beat * Math.PI * 2 + 1.2) * 0.35,
+    bass: 0.55 + beatPulse * 0.45,
+    mids: 0.42 + 0.35 * (0.5 + 0.5 * Math.sin(t * 5.4)),
+    air: 0.58 + 0.32 * (0.5 + 0.5 * Math.sin(t * 8.1 + 1.4)),
+    kick: beatPulse,
+    lineAlpha: 0.82 + beatPulse * 0.18,
+    glow: 0.62 + beatPulse * 0.28,
+    lineWidth: 1.25 + beatPulse * 0.28,
+    glass: 0.74,
+    visorFill: 0.28 + beatPulse * 0.12,
+    bgAlpha: 0.34 + beatPulse * 0.12,
+    transparentBG: false,
+    rig: {
+      ...DEFAULT_RIG,
+      scale: 2.72 + beatPulse * 0.12,
+      motionAmp: 0.78,
+      jitter: 0.02,
+      shoulders: 1.08,
+      hips: 0.96,
+      offsetY: 0.08 + groove * 0.012,
+    },
+    lines: {
+      glow: true,
+      shoulder: false,
+      head: true,
+      glass: true,
+      visor: true,
+      visorFill: true,
+      arms: true,
+      legs: true,
+      backpack: true,
+      ground: true,
+    },
+  };
+
+  drawEqAstronaut(ctx, width, height, params);
+
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.globalCompositeOperation = "lighter";
+
+  const laserCount = 6;
+  for (let i = 0; i < laserCount; i++) {
+    const phase = t * (0.9 + i * 0.08) + i * 1.21;
+    const fromLeft = i % 2 === 0;
+    const x0 = fromLeft ? 0 : width;
+    const y0 = height * (0.08 + i * 0.115);
+    const x1 = width * (0.5 + Math.sin(phase) * 0.42);
+    const y1 = height * (0.22 + Math.cos(phase * 0.8) * 0.16);
+
+    ctx.strokeStyle = crt.rgba((0.08 + beatPulse * 0.16) * (1 - i * 0.075));
+    ctx.lineWidth = Math.max(1, (1.4 + beatPulse * 2.2) * px);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }
+
+  const bars = 28;
+  const gap = Math.max(2, 3 * px);
+  const floorY = height - 16 * px;
+  const usableW = width * 0.72;
+  const barW = Math.max(2, (usableW - gap * (bars - 1)) / bars);
+  const startX = (width - usableW) * 0.5;
+
+  for (let i = 0; i < bars; i++) {
+    const n = i / Math.max(1, bars - 1);
+    const wave = 0.5 + 0.5 * Math.sin(t * 7.5 + i * 0.65);
+    const level = 0.18 + wave * 0.46 + beatPulse * (0.18 + Math.sin(n * Math.PI) * 0.24);
+    const h = level * height * 0.17;
+    const x = startX + i * (barW + gap);
+
+    ctx.fillStyle = crt.rgba(0.12 + level * 0.42);
+    ctx.fillRect(x, floorY - h, barW, h);
+  }
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.font = `${Math.max(12, 13 * px)}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = crt.rgba((0.58 + beatPulse * 0.34) * fade);
+  ctx.fillText("ASTROTRANCE 128 BPM", width * 0.5, 14 * px);
+
+  ctx.restore();
+}
+
 export function TerminalOverlay({
   open,
   activeTab,
@@ -718,10 +863,15 @@ export function TerminalOverlay({
   const outputRef = useRef<HTMLDivElement | null>(null);
   const mowerCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const matrixCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const astroTranceMatrixCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const astroTranceCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const astroTranceAudioRef = useRef<HTMLAudioElement | null>(null);
   const mowerTimerRef = useRef<number | null>(null);
   const mowerRafRef = useRef<number | null>(null);
   const matrixTimerRef = useRef<number | null>(null);
   const matrixRafRef = useRef<number | null>(null);
+  const astroTranceTimerRef = useRef<number | null>(null);
+  const astroTranceRafRef = useRef<number | null>(null);
   const rebootTimersRef = useRef<number[]>([]);
   const pointerDownInsideRef = useRef(false);
   const initialLinesRef = useRef<{ lines: TerminalLine[]; nextId: number } | null>(null);
@@ -737,6 +887,7 @@ export function TerminalOverlay({
   const [rebooting, setRebooting] = useState(false);
   const [mowerActive, setMowerActive] = useState(false);
   const [matrixActive, setMatrixActive] = useState(false);
+  const [astroTranceActive, setAstroTranceActive] = useState(false);
   const [lines, setLines] = useState<TerminalLine[]>(initialLinesRef.current.lines);
 
   const motionDisabled = !effectsEnabled || accessibilityEnabled;
@@ -778,6 +929,44 @@ export function TerminalOverlay({
     setMatrixActive(false);
     window.requestAnimationFrame(() => {
       setMatrixActive(true);
+    });
+  };
+
+  const stopAstroTranceAudio = () => {
+    const audio = astroTranceAudioRef.current;
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
+  };
+
+  const playAstroTranceAudio = () => {
+    if (!soundEnabled) {
+      stopAstroTranceAudio();
+      return;
+    }
+
+    let audio = astroTranceAudioRef.current;
+    if (!audio) {
+      audio = new Audio(ASTROTRANCE_AUDIO_SRC);
+      audio.preload = "auto";
+      audio.volume = 0.78;
+      astroTranceAudioRef.current = audio;
+    }
+
+    audio.pause();
+    audio.currentTime = 0;
+    void audio.play().catch(() => {});
+  };
+
+  const triggerAstroTrance = () => {
+    if (astroTranceTimerRef.current !== null) window.clearTimeout(astroTranceTimerRef.current);
+    if (astroTranceRafRef.current !== null) window.cancelAnimationFrame(astroTranceRafRef.current);
+    stopAstroTranceAudio();
+
+    setAstroTranceActive(false);
+    window.requestAnimationFrame(() => {
+      setAstroTranceActive(true);
     });
   };
 
@@ -830,6 +1019,7 @@ export function TerminalOverlay({
       navigate: onNavigate,
       triggerMower,
       triggerMatrix,
+      triggerAstroTrance,
       openColorPicker,
       activeTab,
       soundEnabled,
@@ -863,6 +1053,17 @@ export function TerminalOverlay({
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }, [inlineBodyVisible, isInline, open]);
 
+  useEffect(() => {
+    if (open) return;
+
+    if (astroTranceRafRef.current !== null) window.cancelAnimationFrame(astroTranceRafRef.current);
+    if (astroTranceTimerRef.current !== null) window.clearTimeout(astroTranceTimerRef.current);
+    astroTranceRafRef.current = null;
+    astroTranceTimerRef.current = null;
+    stopAstroTranceAudio();
+    setAstroTranceActive(false);
+  }, [open]);
+
   useFocusTrap({
     active: open && !isInline && !colorPickerOpen,
     containerRef: panelRef,
@@ -886,10 +1087,13 @@ export function TerminalOverlay({
   useEffect(() => {
     return () => {
       stopHoverNoise();
+      stopAstroTranceAudio();
       if (mowerTimerRef.current !== null) window.clearTimeout(mowerTimerRef.current);
       if (mowerRafRef.current !== null) window.cancelAnimationFrame(mowerRafRef.current);
       if (matrixTimerRef.current !== null) window.clearTimeout(matrixTimerRef.current);
       if (matrixRafRef.current !== null) window.cancelAnimationFrame(matrixRafRef.current);
+      if (astroTranceTimerRef.current !== null) window.clearTimeout(astroTranceTimerRef.current);
+      if (astroTranceRafRef.current !== null) window.cancelAnimationFrame(astroTranceRafRef.current);
       clearRebootTimers();
     };
   }, []);
@@ -1013,17 +1217,115 @@ export function TerminalOverlay({
   }, [matrixActive]);
 
   useEffect(() => {
+    if (!astroTranceActive) return;
+
+    const matrixCanvas = astroTranceMatrixCanvasRef.current;
+    const canvas = astroTranceCanvasRef.current;
+    const host = outputRef.current;
+    const matrixCtx = matrixCanvas?.getContext("2d");
+    const ctx = canvas?.getContext("2d");
+    if (!matrixCanvas || !canvas || !host || !matrixCtx || !ctx) return;
+
+    let start = 0;
+    let prev = 0;
+    let matrixColumns: MatrixColumn[] = [];
+    let cssW = 1;
+    let cssH = 1;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    const resize = () => {
+      const rect = host.getBoundingClientRect();
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      cssW = width;
+      cssH = height;
+
+      matrixCanvas.width = Math.ceil(width * dpr);
+      matrixCanvas.height = Math.ceil(height * dpr);
+      matrixCanvas.style.width = `${width}px`;
+      matrixCanvas.style.height = `${height}px`;
+      matrixCanvas.style.opacity = "0.42";
+      matrixCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      matrixCtx.clearRect(0, 0, width, height);
+      matrixColumns = makeMatrixColumns(width, height, 16);
+
+      canvas.width = Math.ceil(width * dpr);
+      canvas.height = Math.ceil(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      canvas.style.opacity = "1";
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const stop = () => {
+      const rect = host.getBoundingClientRect();
+      matrixCtx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, rect.width * dpr, rect.height * dpr);
+      stopAstroTranceAudio();
+      setAstroTranceActive(false);
+      astroTranceTimerRef.current = null;
+      astroTranceRafRef.current = null;
+    };
+
+    const tick = (now: number) => {
+      if (!start) {
+        start = now;
+        prev = now;
+        resize();
+      }
+
+      const elapsed = now - start;
+      const dt = Math.min(0.05, Math.max(0.001, (now - prev) / 1000));
+      prev = now;
+      const fade = Math.max(0, Math.min(1, 1 - Math.max(0, elapsed - ASTROTRANCE_DURATION_MS + 760) / 760));
+      const matrixElapsed = elapsed % Math.max(1000, MATRIX_DURATION_MS - 760);
+      matrixCanvas.style.opacity = `${0.42 * fade}`;
+      canvas.style.opacity = `${fade}`;
+
+      drawMatrixRain(matrixCtx, cssW, cssH, matrixColumns, dt, matrixElapsed);
+      drawAstroTrance(ctx, canvas.width, canvas.height, elapsed);
+
+      if (elapsed < ASTROTRANCE_DURATION_MS) {
+        astroTranceRafRef.current = window.requestAnimationFrame(tick);
+      } else {
+        astroTranceTimerRef.current = window.setTimeout(stop, 120);
+      }
+    };
+
+    playAstroTranceAudio();
+
+    resize();
+    window.addEventListener("resize", resize);
+    astroTranceRafRef.current = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      stopAstroTranceAudio();
+      if (astroTranceRafRef.current !== null) window.cancelAnimationFrame(astroTranceRafRef.current);
+      if (astroTranceTimerRef.current !== null) window.clearTimeout(astroTranceTimerRef.current);
+    };
+  }, [astroTranceActive]);
+
+  useEffect(() => {
     if (!motionDisabled) return;
     if (mowerRafRef.current !== null) window.cancelAnimationFrame(mowerRafRef.current);
     if (mowerTimerRef.current !== null) window.clearTimeout(mowerTimerRef.current);
     if (matrixRafRef.current !== null) window.cancelAnimationFrame(matrixRafRef.current);
     if (matrixTimerRef.current !== null) window.clearTimeout(matrixTimerRef.current);
+    if (astroTranceRafRef.current !== null) window.cancelAnimationFrame(astroTranceRafRef.current);
+    if (astroTranceTimerRef.current !== null) window.clearTimeout(astroTranceTimerRef.current);
     mowerRafRef.current = null;
     mowerTimerRef.current = null;
     matrixRafRef.current = null;
     matrixTimerRef.current = null;
+    astroTranceRafRef.current = null;
+    astroTranceTimerRef.current = null;
+    stopHoverNoise();
+    stopAstroTranceAudio();
     setMowerActive(false);
     setMatrixActive(false);
+    setAstroTranceActive(false);
   }, [motionDisabled]);
 
   const handlePanelBlur = () => {
@@ -1185,6 +1487,21 @@ export function TerminalOverlay({
               className="pointer-events-none absolute inset-0 z-10 opacity-95"
               aria-hidden="true"
             />
+          )}
+
+          {astroTranceActive && (
+            <>
+              <canvas
+                ref={astroTranceMatrixCanvasRef}
+                className="pointer-events-none absolute inset-0 z-[18]"
+                aria-hidden="true"
+              />
+              <canvas
+                ref={astroTranceCanvasRef}
+                className="pointer-events-none absolute inset-0 z-20 opacity-95"
+                aria-hidden="true"
+              />
+            </>
           )}
 
           <div

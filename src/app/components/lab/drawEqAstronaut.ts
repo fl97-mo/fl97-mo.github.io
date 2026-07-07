@@ -122,15 +122,17 @@ export function drawEqAstronaut(
         g.stroke();
       }
 
-      const torsoCX = cxBase + sway * 0.35 + tug * 0.75;
-      const shoulderY = lerp(torsoTopY, hipY, 0.42) - bounce * 0.12;
-      const shoulderCenterX = torsoCX + bodyYaw * headR * 0.1;
-      const shoulderSpread = (6.4 * s) * (1 - face * 0.55) * p.rig.shoulders;
+      if (p.lines.shoulder !== false) {
+        const torsoCX = cxBase + sway * 0.35 + tug * 0.75;
+        const shoulderY = lerp(torsoTopY, hipY, 0.42) - bounce * 0.12;
+        const shoulderCenterX = torsoCX + bodyYaw * headR * 0.1;
+        const shoulderSpread = (6.4 * s) * (1 - face * 0.55) * p.rig.shoulders;
 
-      g.beginPath();
-      g.moveTo(shoulderCenterX - shoulderSpread, shoulderY);
-      g.lineTo(shoulderCenterX + shoulderSpread, shoulderY);
-      g.stroke();
+        g.beginPath();
+        g.moveTo(shoulderCenterX - shoulderSpread, shoulderY);
+        g.lineTo(shoulderCenterX + shoulderSpread, shoulderY);
+        g.stroke();
+      }
 
       g.globalCompositeOperation = "source-over";
     }

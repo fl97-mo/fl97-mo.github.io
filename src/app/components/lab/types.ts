@@ -36,6 +36,7 @@ export const DEFAULT_RIG: RigParams = {
 
 export type LineToggles = {
   glow: boolean;
+  shoulder?: boolean;
   head: boolean;
   glass: boolean;
   visor: boolean;
