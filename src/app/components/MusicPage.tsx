@@ -304,6 +304,7 @@ function MusicItemRow({
                 <a
                   href={downloadHref(downloadFile)}
                   download={downloadFile}
+                  aria-label={`Download ${downloadFile}`}
                   className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all text-xs tracking-widest"
                   style={{
                     boxShadow:

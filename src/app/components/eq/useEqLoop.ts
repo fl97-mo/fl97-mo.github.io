@@ -6,6 +6,7 @@ import { drawWalkers } from "./render/scene";
 type Ref<T> = { current: T };
 
 export type UseEqLoopArgs = {
+  disabled?: boolean;
   tickList: number[];
   visEdges: number[];
 
@@ -151,6 +152,23 @@ export function useEqLoop(args: UseEqLoopArgs) {
   }, [args.spectrumRef, args.walkersRef]);
 
   useEffect(() => {
+    if (args.disabled) {
+      const spectrumEl = args.spectrumRef.current;
+      const walkersEl = args.walkersRef.current;
+
+      if (spectrumEl) {
+        if (!specCtxRef.current) specCtxRef.current = spectrumEl.getContext("2d");
+        specCtxRef.current?.clearRect(0, 0, spectrumEl.width, spectrumEl.height);
+      }
+
+      if (walkersEl) {
+        if (!walkCtxRef.current) walkCtxRef.current = walkersEl.getContext("2d");
+        walkCtxRef.current?.clearRect(0, 0, walkersEl.width, walkersEl.height);
+      }
+
+      return;
+    }
+
     const step = (now: number) => {
       const dt = Math.min(0.05, Math.max(0.001, (now - lastRef.current) / 1000));
       lastRef.current = now;
@@ -254,5 +272,13 @@ export function useEqLoop(args: UseEqLoopArgs) {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [args.tickList, args.visEdges, args.spectrumRef, args.walkersRef, args.analyserRef, args.connectedRef]);
+  }, [
+    args.disabled,
+    args.tickList,
+    args.visEdges,
+    args.spectrumRef,
+    args.walkersRef,
+    args.analyserRef,
+    args.connectedRef,
+  ]);
 }

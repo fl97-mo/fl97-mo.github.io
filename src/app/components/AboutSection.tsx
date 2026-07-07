@@ -14,10 +14,10 @@ export function AboutSection() {
           <span className="text-primary">{'>'}</span> Automations and tools that help with daily life.
         </p>
         <p>
-          <span className="text-primary">{'>'}</span> I like creating electronic music.
+          <span className="text-primary">{'>'}</span> LOCATION: GERMANY
         </p>
         <p>
-          <span className="text-primary">{'>'}</span> LOCATION: GERMANY
+          <span className="text-primary">{'>'}</span> Enjoy your stay :)
         </p>
       </div>
     </section>

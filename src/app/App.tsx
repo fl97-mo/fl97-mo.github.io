@@ -19,6 +19,7 @@ import { ColorPickerDialog } from "./components/ColorPickerDialog";
 import { primeAudio, startStatic, stopStatic, playSound } from "./utils/sfx";
 import { TypewriterCursorProvider } from "./components/Typewriter";
 import { useUI } from "./store/ui";
+import { useFocusTrap } from "./utils/useFocusTrap";
 
 const SS_EQ_WARNING_DISMISSED = "ui.eqWarningDismissed.session";
 
@@ -49,6 +50,10 @@ export default function App() {
 
   const primedRef = useRef(false);
   const terminalButtonRef = useRef<HTMLButtonElement | null>(null);
+  const a11yNoticeRef = useRef<HTMLDivElement | null>(null);
+  const a11yNoticeDismissRef = useRef<HTMLButtonElement | null>(null);
+  const eqWarningRef = useRef<HTMLDivElement | null>(null);
+  const eqWarningDismissRef = useRef<HTMLButtonElement | null>(null);
 
   const {
     introDone,
@@ -65,6 +70,12 @@ export default function App() {
   const chromeHasRevealedRef = useRef(homeRevealDone);
   const [navigationVisible, setNavigationVisible] = useState(homeRevealDone);
   const [footerVisible, setFooterVisible] = useState(homeRevealDone);
+
+  const dismissEqWarning = useCallback(() => {
+    setEqWarningOpen(false);
+    setEqWarningDismissed(true);
+    writeSessionBool(SS_EQ_WARNING_DISMISSED, true);
+  }, []);
 
   useEffect(() => {
     const handler = async () => {
@@ -108,6 +119,13 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [accessibilityAutoDetected, dismissAccessibilityAutoDetected]);
 
+  useFocusTrap({
+    active: accessibilityAutoDetected && !eqWarningOpen,
+    containerRef: a11yNoticeRef,
+    initialFocusRef: a11yNoticeDismissRef,
+    onEscape: dismissAccessibilityAutoDetected,
+  });
+
   useEffect(() => {
     if (!homeRevealDone) {
       chromeHasRevealedRef.current = false;
@@ -139,15 +157,22 @@ export default function App() {
     }
   }, [activeTab, eqWarningDismissed]);
 
+  useEffect(() => {
+    if (!eqWarningOpen) return;
+
+    window.setTimeout(() => eqWarningDismissRef.current?.focus(), 0);
+  }, [dismissEqWarning, eqWarningOpen]);
+
+  useFocusTrap({
+    active: eqWarningOpen,
+    containerRef: eqWarningRef,
+    initialFocusRef: eqWarningDismissRef,
+    onEscape: dismissEqWarning,
+  });
+
   const navigateToTab = (tab: TabId) => {
     setActiveTab(tab);
     if (tab !== "systems") setSystemsTargetSlug(null);
-  };
-
-  const dismissEqWarning = () => {
-    setEqWarningOpen(false);
-    setEqWarningDismissed(true);
-    writeSessionBool(SS_EQ_WARNING_DISMISSED, true);
   };
 
   const closeTerminal = () => {
@@ -246,6 +271,7 @@ export default function App() {
 
           <div className="mt-6 pt-3 border-t border-primary/10 text-xs tracking-widest flex items-center justify-center gap-4">
             <button
+              type="button"
               onClick={() => {
                 if (soundEnabled) {
                   primeAudio();
@@ -261,6 +287,7 @@ export default function App() {
             <span className="text-primary/30">::</span>
 
             <button
+              type="button"
               onClick={() => {
                 if (soundEnabled) {
                   primeAudio();
@@ -286,8 +313,10 @@ export default function App() {
 
         {accessibilityAutoDetected && (
           <div
+            ref={a11yNoticeRef}
             role="status"
             aria-live="polite"
+            tabIndex={-1}
             className="
               fixed left-1/2 top-1/2 z-50 w-[min(92vw,28rem)] -translate-x-1/2 -translate-y-1/2
               border-2 border-primary bg-background/95 p-4 text-primary
@@ -295,8 +324,9 @@ export default function App() {
             "
           >
             <div className="mb-2 flex items-start justify-between gap-4 border-b border-primary/30 pb-2">
-              <span className="text-sm tracking-widest">A11Y MODE DETECTED</span>
+              <span className="text-sm tracking-widest">ACCESSIBILITY MODE DETECTED</span>
               <button
+                ref={a11yNoticeDismissRef}
                 type="button"
                 onClick={dismissAccessibilityAutoDetected}
                 className="text-sm text-muted-foreground transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -314,10 +344,12 @@ export default function App() {
 
         {eqWarningOpen && (
           <div
+            ref={eqWarningRef}
             role="alertdialog"
-            aria-modal="false"
+            aria-modal="true"
             aria-labelledby="eq-warning-title"
             aria-describedby="eq-warning-copy"
+            tabIndex={-1}
             className="
               fixed left-1/2 top-1/2 z-50 w-[min(92vw,30rem)] -translate-x-1/2 -translate-y-1/2
               border-2 border-primary bg-background/95 p-4 text-primary
@@ -329,6 +361,7 @@ export default function App() {
                 EQ VISUAL WARNING
               </span>
               <button
+                ref={eqWarningDismissRef}
                 type="button"
                 onClick={dismissEqWarning}
                 className="text-sm text-muted-foreground transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"

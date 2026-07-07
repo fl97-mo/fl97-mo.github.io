@@ -115,6 +115,7 @@ export function EqualizerPage() {
   const forceAutoplayRef = useRef(false);
 
   const {
+    accessibilityEnabled,
     eqQueue,
     eqActiveId,
     eqFiles,
@@ -448,6 +449,7 @@ useEffect(() => {
   }, [eqQueue, eqRepeat, activeIndex]);
 
   useEqLoop({
+    disabled: accessibilityEnabled,
     tickList: TICK_LIST,
     visEdges: VIS_EDGES,
 
@@ -643,21 +645,41 @@ useEffect(() => {
       <div className="grid grid-cols-1 lg:grid-cols-[2.35fr_0.65fr] gap-4">
         <div className="border border-primary/20 rounded bg-background/40 p-4">
           <div className="border border-primary/15 rounded bg-background/30 p-3 mb-2">
-            <canvas
-              ref={walkersRef}
-              role="img"
-              aria-label="Animated audio walker visualization"
-              className="w-full h-56 rounded"
-            />
+            {accessibilityEnabled ? (
+              <div
+                role="img"
+                aria-label="Audio walker visualization disabled in accessibility mode"
+                className="flex h-56 items-center justify-center rounded border border-primary/20 bg-background/60 p-4 text-center text-sm leading-relaxed text-muted-foreground"
+              >
+                A11Y MODE: animated walker visualization disabled.
+              </div>
+            ) : (
+              <canvas
+                ref={walkersRef}
+                role="img"
+                aria-label="Animated audio walker visualization"
+                className="w-full h-56 rounded"
+              />
+            )}
           </div>
 
           <div className="border border-primary/15 rounded bg-background/30 p-2">
-            <canvas
-              ref={spectrumRef}
-              role="img"
-              aria-label="Audio spectrum visualization"
-              className="w-full h-64 rounded"
-            />
+            {accessibilityEnabled ? (
+              <div
+                role="img"
+                aria-label="Audio spectrum visualization disabled in accessibility mode"
+                className="flex h-64 items-center justify-center rounded border border-primary/20 bg-background/60 p-4 text-center text-sm leading-relaxed text-muted-foreground"
+              >
+                A11Y MODE: animated spectrum visualization disabled.
+              </div>
+            ) : (
+              <canvas
+                ref={spectrumRef}
+                role="img"
+                aria-label="Audio spectrum visualization"
+                className="w-full h-64 rounded"
+              />
+            )}
           </div>
 
           <div className="mt-2 text-xs text-muted-foreground tracking-widest flex items-center justify-between gap-3">
@@ -736,7 +758,9 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
+              type="button"
               onClick={() => togglePlay()}
+              aria-label={isPlaying ? "Pause audio" : "Play audio"}
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
               style={{
                 boxShadow:
@@ -747,7 +771,9 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             </button>
 
             <button
+              type="button"
               onClick={() => goDelta(-1, true)}
+              aria-label="Play previous track"
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
@@ -759,7 +785,9 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             </button>
 
             <button
+              type="button"
               onClick={() => goDelta(1, true)}
+              aria-label="Play next track"
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
@@ -771,7 +799,9 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             </button>
 
             <button
+              type="button"
               onClick={() => cycleEqRepeat()}
+              aria-label={`Change repeat mode, current mode ${eqRepeat}`}
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
@@ -813,6 +843,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
                   const label = `${t.artist ? `${t.artist} — ` : ""}${t.title}`;
                   return (
                     <button
+                      type="button"
                       key={t.id}
                       aria-current={active ? "true" : undefined}
                       aria-label={`${active ? "Current track" : "Load track"}: ${label}`}

@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { Palette, X } from "lucide-react";
 
 import { useUI } from "../store/ui";
 import { CRT_COLOR_PRESETS, DEFAULT_CRT_COLOR } from "../utils/crtAccent";
 import { playSoundAsync } from "../utils/sfx";
+import { useFocusTrap } from "../utils/useFocusTrap";
 
 export function ColorPickerDialog() {
   const {
@@ -16,19 +17,14 @@ export function ColorPickerDialog() {
     soundEnabled,
   } = useUI();
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => {
-    if (!colorPickerOpen) return;
-
-    window.setTimeout(() => panelRef.current?.focus(), 0);
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeColorPicker();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [closeColorPicker, colorPickerOpen]);
+  useFocusTrap({
+    active: colorPickerOpen,
+    containerRef: panelRef,
+    initialFocusRef: closeButtonRef,
+    onEscape: closeColorPicker,
+  });
 
   if (!colorPickerOpen || typeof document === "undefined") return null;
 
@@ -60,6 +56,7 @@ export function ColorPickerDialog() {
           </div>
 
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={closeColorPicker}
             className="shrink-0 rounded border border-primary/40 bg-background/60 p-1 text-primary hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"

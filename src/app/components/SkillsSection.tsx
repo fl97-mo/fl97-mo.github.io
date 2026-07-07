@@ -68,7 +68,8 @@ export function SkillsSection() {
                   href={wikiUrl(skill)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2 hover:text-primary transition-colors"
+                  aria-label={`Open Wikipedia article for ${skill} in a new tab`}
+                  className="group inline-flex items-center gap-2 hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
                   title={`Open Wikipedia: ${skill}`}
                   onClick={() => {
                     if (!soundEnabled) return;

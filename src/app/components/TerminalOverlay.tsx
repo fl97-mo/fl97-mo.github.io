@@ -7,6 +7,7 @@ import type { TabId } from "./RetroNavigation";
 import { useUI } from "../store/ui";
 import { getCrtPalette } from "../utils/crtTheme";
 import { playSoundAsync, primeAudio, startHoverNoise, stopHoverNoise } from "../utils/sfx";
+import { useFocusTrap } from "../utils/useFocusTrap";
 import { HOME_BOOT_TRANSCRIPT_LINES } from "./homeBootSequence";
 
 type TerminalOverlayProps = {
@@ -843,6 +844,13 @@ export function TerminalOverlay({
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }, [open]);
 
+  useFocusTrap({
+    active: open && !isInline && !colorPickerOpen,
+    containerRef: panelRef,
+    initialFocusRef: inputRef,
+    onEscape: onClose,
+  });
+
   useEffect(() => {
     if (!homeRevealDone || homeBootTranscriptLoadedRef.current || terminalTouchedRef.current) return;
 
@@ -851,18 +859,6 @@ export function TerminalOverlay({
     homeBootTranscriptLoadedRef.current = true;
     setLines(next.lines);
   }, [homeRevealDone]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (colorPickerOpen) return;
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [colorPickerOpen, onClose, open]);
 
   useEffect(() => {
     outputRef.current?.scrollTo({ top: outputRef.current.scrollHeight });
