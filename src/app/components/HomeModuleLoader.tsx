@@ -56,6 +56,7 @@ export function HomeModuleLoader({
     !animated && complete ? "collapsed" : "expanded"
   );
   const [inlineTerminalOpen, setInlineTerminalOpen] = useState(false);
+  const [inlineTerminalHasOpened, setInlineTerminalHasOpened] = useState(false);
   const [bootStep, setBootStep] = useState(animated ? 1 : BOOT_READY_STEP);
   const didFinishBootRef = useRef(!animated);
 
@@ -64,6 +65,7 @@ export function HomeModuleLoader({
   const collapsed = collapseState === "collapsed";
   const contentVisible = collapseState === "expanded";
   const canOpenInlineTerminal = isComplete && collapsed && !inlineTerminalOpen;
+  const readyDots = animated ? READY_DOT_FRAMES[readyDotFrame] : "...";
 
   useEffect(() => {
     if (isComplete || !bootReady) return;
@@ -106,6 +108,7 @@ export function HomeModuleLoader({
     if (!isComplete) {
       setCollapseState("expanded");
       setInlineTerminalOpen(false);
+      setInlineTerminalHasOpened(false);
       return;
     }
 
@@ -133,6 +136,7 @@ export function HomeModuleLoader({
   const openInlineTerminal = () => {
     if (!canOpenInlineTerminal) return;
     stopHoverNoise();
+    setInlineTerminalHasOpened(true);
     setInlineTerminalOpen(true);
   };
 
@@ -173,6 +177,19 @@ export function HomeModuleLoader({
       />
     );
   };
+
+  const readyLabel = (
+    <span className="flex min-w-0 items-start gap-2">
+      <span className="text-primary">{">"}</span>
+      <span className="min-w-0 truncate">
+        {HOME_BOOT_READY_TEXT}
+        <span className="inline-block w-[1.5em] text-left" aria-hidden="true">
+          {readyDots}
+        </span>
+        <span className="sr-only">...</span>
+      </span>
+    </span>
+  );
 
   return (
     <section
@@ -289,23 +306,15 @@ export function HomeModuleLoader({
           onFocus={startReadyHoverNoise}
           onBlur={stopHoverNoise}
           className={`
-            home-ready-reveal absolute inset-x-0 bottom-0 flex h-14 items-center px-4 text-left text-sm text-primary
+            home-ready-reveal absolute inset-x-0 flex h-14 items-center px-4 text-left text-sm text-primary
             transition-[background-color,opacity,transform] duration-300 sm:px-5 sm:text-base
             hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none
             disabled:cursor-default disabled:hover:bg-transparent
+            ${inlineTerminalHasOpened ? "top-0" : "bottom-0"}
           `}
           aria-label="Open inline terminal"
         >
-          <span className="flex items-start gap-2">
-            <span className="text-primary">{">"}</span>
-            <span>
-              {HOME_BOOT_READY_TEXT}
-              <span className="inline-block w-[1.5em] text-left" aria-hidden="true">
-                {animated ? READY_DOT_FRAMES[readyDotFrame] : "..."}
-              </span>
-              <span className="sr-only">...</span>
-            </span>
-          </span>
+          {readyLabel}
         </button>
       )}
 
@@ -323,6 +332,7 @@ export function HomeModuleLoader({
             onClose={() => setInlineTerminalOpen(false)}
             onNavigate={onNavigate}
             variant="inline"
+            inlineHeaderTitle={readyLabel}
           />
         </div>
       )}

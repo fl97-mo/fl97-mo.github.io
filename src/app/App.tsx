@@ -14,6 +14,7 @@ import { AstronautLogoLab } from "./components/AstronautLogoLab";
 import { INFOPage } from "./components/info";
 import { PrivacyPage } from "./components/PrivacyPage";
 import { TerminalOverlay } from "./components/TerminalOverlay";
+import { ColorPickerDialog } from "./components/ColorPickerDialog";
 
 import { primeAudio, startStatic, stopStatic, playSound } from "./utils/sfx";
 import { TypewriterCursorProvider } from "./components/Typewriter";
@@ -234,6 +235,8 @@ export default function App() {
           onClose={closeTerminal}
           onNavigate={navigateToTab}
         />
+
+        <ColorPickerDialog />
       </TypewriterCursorProvider>
     </CRTScreen>
   );

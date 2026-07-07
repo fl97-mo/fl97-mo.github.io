@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { Home, Code, Music, Layers, SlidersHorizontal, Rocket, Terminal } from "lucide-react";
+import { Home, Code, Music, Layers, SlidersHorizontal, Rocket, Terminal, Palette } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useUI } from "../store/ui";
 import { playMechClick, playSound, primeAudio, stopHoverNoise } from "../utils/sfx";
@@ -110,6 +110,8 @@ export function RetroNavigation({
     setEffectsEnabled,
     accessibilityEnabled,
     setAccessibilityEnabled,
+    crtColor,
+    openColorPicker,
   } = useUI();
 
   const navItems: { id: TabId; label: string; icon: LucideIcon }[] = [
@@ -130,6 +132,16 @@ export function RetroNavigation({
     }
 
     onChange(tab);
+  };
+
+  const openThemePicker = () => {
+    stopHoverNoise();
+
+    if (soundEnabled) {
+      primeAudio(["TERM"]).then(() => playSound("TERM", 0.2, 1.04, 80)).catch(() => {});
+    }
+
+    openColorPicker();
   };
 
   return (
@@ -220,6 +232,37 @@ export function RetroNavigation({
                 setAccessibilityEnabled(v);
               }}
             />
+
+            <button
+              type="button"
+              onClick={openThemePicker}
+              title={accessibilityEnabled ? "Color picker locked while A11Y is enabled" : "Open color picker"}
+              aria-label={accessibilityEnabled ? "Open color picker, locked while A11Y is enabled" : "Open color picker"}
+              className={`
+                inline-flex h-12 w-full min-w-0 2xl:w-28
+                items-center justify-between gap-3
+                rounded border px-3
+                bg-[var(--crt-toggle-shell)]
+                border-[var(--crt-toggle-border)]
+                text-muted-foreground transition-all duration-150
+                hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50
+              `}
+              style={{
+                boxShadow:
+                  "inset -1px -1px 2px rgba(0,0,0,0.8), inset 1px 1px 2px rgba(255,255,255,0.04)",
+              }}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <Palette className="h-4 w-4 shrink-0" />
+                <span className="truncate text-xs tracking-widest sm:text-sm">COLOR</span>
+              </span>
+
+              <span
+                className="h-5 w-5 shrink-0 rounded-sm border border-[var(--crt-toggle-track-border)]"
+                style={{ backgroundColor: accessibilityEnabled ? "#ffffff" : crtColor }}
+                aria-hidden="true"
+              />
+            </button>
           </div>
         </div>
       </nav>

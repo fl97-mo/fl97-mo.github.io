@@ -14,6 +14,7 @@ import {
   stopStatic,
   stopTypingLoop,
 } from "../utils/sfx";
+import { DEFAULT_CRT_COLOR, crtColorToRgb, normalizeCrtColor } from "../utils/crtAccent";
 
 export type EqRepeat = "OFF" | "ONE" | "ALL";
 
@@ -29,12 +30,17 @@ type UIState = {
   soundEnabled: boolean;
   effectsEnabled: boolean;
   accessibilityEnabled: boolean;
+  crtColor: string;
+  colorPickerOpen: boolean;
   introDone: boolean;
   homeRevealDone: boolean;
 
   setSoundEnabled: (v: boolean) => void;
   setEffectsEnabled: (v: boolean) => void;
   setAccessibilityEnabled: (v: boolean) => void;
+  setCrtColor: (hex: string) => void;
+  openColorPicker: () => void;
+  closeColorPicker: () => void;
 
   markIntroDone: () => void;
   markHomeRevealDone: () => void;
@@ -57,6 +63,7 @@ const UIContext = createContext<UIState | null>(null);
 const SS_SOUND = "ui.soundEnabled.session";
 const SS_EFFECTS = "ui.effectsEnabled.session";
 const SS_ACCESSIBILITY = "ui.accessibilityEnabled.session";
+const SS_CRT_COLOR = "ui.crtColor.session";
 const SS_INTRO_DONE = "ui.introDone.session";
 const SS_HOME_REVEAL_DONE = "ui.homeRevealDone.session";
 
@@ -107,6 +114,10 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [accessibilityEnabled, setAccessibilityEnabledState] = useState(() =>
     readBoolFromSessionStorage(SS_ACCESSIBILITY, false)
   );
+  const [crtColor, setCrtColorState] = useState(() =>
+    normalizeCrtColor(readStrFromSessionStorage(SS_CRT_COLOR, DEFAULT_CRT_COLOR))
+  );
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [introDone, setIntroDone] = useState(() =>
     readBoolFromSessionStorage(SS_INTRO_DONE, false)
   );
@@ -136,12 +147,14 @@ export function UIProvider({ children }: { children: ReactNode }) {
     const se = readBoolFromSessionStorage(SS_SOUND, false);
     const ee = readBoolFromSessionStorage(SS_EFFECTS, true);
     const ae = readBoolFromSessionStorage(SS_ACCESSIBILITY, false);
+    const color = normalizeCrtColor(readStrFromSessionStorage(SS_CRT_COLOR, DEFAULT_CRT_COLOR));
     const id = readBoolFromSessionStorage(SS_INTRO_DONE, false);
     const hrd = id && readBoolFromSessionStorage(SS_HOME_REVEAL_DONE, false);
 
     setSoundEnabledState(se);
     setEffectsEnabledState(ee);
     setAccessibilityEnabledState(ae);
+    setCrtColorState(color);
     setIntroDone(id);
     setHomeRevealDone(hrd);
 
@@ -186,6 +199,20 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const setAccessibilityEnabled = useCallback((v: boolean) => {
     setAccessibilityEnabledState(v);
     writeBoolToSessionStorage(SS_ACCESSIBILITY, v);
+  }, []);
+
+  const setCrtColor = useCallback((hex: string) => {
+    const color = normalizeCrtColor(hex);
+    setCrtColorState(color);
+    writeStrToSessionStorage(SS_CRT_COLOR, color);
+  }, []);
+
+  const openColorPicker = useCallback(() => {
+    setColorPickerOpen(true);
+  }, []);
+
+  const closeColorPicker = useCallback(() => {
+    setColorPickerOpen(false);
   }, []);
 
   const markIntroDone = useCallback(() => {
@@ -255,16 +282,28 @@ export function UIProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.accessibility = accessibilityEnabled ? "on" : "off";
   }, [accessibilityEnabled]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    root.style.setProperty("--crt-accent", crtColor);
+    root.style.setProperty("--crt-accent-rgb", crtColorToRgb(crtColor));
+  }, [crtColor]);
+
   const value = useMemo<UIState>(
     () => ({
       soundEnabled,
       effectsEnabled,
       accessibilityEnabled,
+      crtColor,
+      colorPickerOpen,
       introDone,
       homeRevealDone,
       setSoundEnabled,
       setEffectsEnabled,
       setAccessibilityEnabled,
+      setCrtColor,
+      openColorPicker,
+      closeColorPicker,
       markIntroDone,
       markHomeRevealDone,
       resetIntroForSession,
@@ -283,11 +322,16 @@ export function UIProvider({ children }: { children: ReactNode }) {
       soundEnabled,
       effectsEnabled,
       accessibilityEnabled,
+      crtColor,
+      colorPickerOpen,
       introDone,
       homeRevealDone,
       setSoundEnabled,
       setEffectsEnabled,
       setAccessibilityEnabled,
+      setCrtColor,
+      openColorPicker,
+      closeColorPicker,
       markIntroDone,
       markHomeRevealDone,
       resetIntroForSession,

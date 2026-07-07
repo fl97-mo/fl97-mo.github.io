@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Terminal as TerminalIcon } from "lucide-react";
@@ -15,6 +15,7 @@ type TerminalOverlayProps = {
   onClose: () => void;
   onNavigate: (tab: TabId) => void;
   variant?: "overlay" | "inline";
+  inlineHeaderTitle?: ReactNode;
 };
 
 type TerminalLineKind = "input" | "output" | "error" | "system";
@@ -42,10 +43,12 @@ type TerminalCommandContext = {
   navigate: (tab: TabId) => void;
   triggerMower: () => void;
   triggerMatrix: () => void;
+  openColorPicker: () => void;
   activeTab: TabId;
   soundEnabled: boolean;
   effectsEnabled: boolean;
   accessibilityEnabled: boolean;
+  crtColor: string;
   eqQueueCount: number;
   eqActiveLabel: string;
   eqRepeat: string;
@@ -269,6 +272,7 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
           `-- SOUND: ${yesNo(ctx.soundEnabled)}`,
           `-- EFFECTS: ${yesNo(ctx.effectsEnabled)}`,
           `-- A11Y: ${yesNo(ctx.accessibilityEnabled)}`,
+          `-- CRT_COLOR: ${ctx.crtColor.toUpperCase()}`,
           `-- MOTION: ${ctx.motionDisabled ? "REDUCED" : "ENABLED"}`,
           `-- EQ_QUEUE: ${ctx.eqQueueCount}`,
           `-- EQ_REPEAT: ${ctx.eqRepeat}`,
@@ -352,6 +356,25 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
     usage: "clear",
     description: "clear terminal output",
     run: () => ({ clear: true }),
+  },
+  {
+    name: "colorpicker",
+    usage: "colorpicker",
+    description: "open CRT color palette",
+    aliases: ["colors", "theme"],
+    run: (_args, ctx) => {
+      if (ctx.accessibilityEnabled) {
+        return {
+          output: [
+            "colorpicker.sys locked: A11Y mode uses a fixed high-contrast white palette. Disable A11Y first.",
+          ],
+          kind: "error",
+        };
+      }
+
+      ctx.openColorPicker();
+      return { output: [`colorpicker.sys opened | current ${ctx.crtColor.toUpperCase()}`], kind: "system" };
+    },
   },
   {
     name: "reboot",
@@ -650,11 +673,15 @@ export function TerminalOverlay({
   onClose,
   onNavigate,
   variant = "overlay",
+  inlineHeaderTitle,
 }: TerminalOverlayProps) {
   const {
     soundEnabled,
     effectsEnabled,
     accessibilityEnabled,
+    crtColor,
+    colorPickerOpen,
+    openColorPicker,
     homeRevealDone,
     resetIntroForSession,
     eqQueue,
@@ -784,10 +811,12 @@ export function TerminalOverlay({
       navigate: onNavigate,
       triggerMower,
       triggerMatrix,
+      openColorPicker,
       activeTab,
       soundEnabled,
       effectsEnabled,
       accessibilityEnabled,
+      crtColor,
       eqQueueCount: eqQueue.length,
       eqActiveLabel,
       eqRepeat,
@@ -796,6 +825,7 @@ export function TerminalOverlay({
     [
       accessibilityEnabled,
       activeTab,
+      crtColor,
       cwd,
       effectsEnabled,
       eqActiveLabel,
@@ -803,6 +833,7 @@ export function TerminalOverlay({
       eqRepeat,
       motionDisabled,
       onNavigate,
+      openColorPicker,
       soundEnabled,
     ]
   );
@@ -825,12 +856,13 @@ export function TerminalOverlay({
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (colorPickerOpen) return;
       if (event.key === "Escape") onClose();
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+  }, [colorPickerOpen, onClose, open]);
 
   useEffect(() => {
     outputRef.current?.scrollTo({ top: outputRef.current.scrollHeight });
@@ -981,6 +1013,7 @@ export function TerminalOverlay({
 
   const handlePanelBlur = () => {
     window.setTimeout(() => {
+      if (colorPickerOpen) return;
       if (pointerDownInsideRef.current) return;
 
       const panel = panelRef.current;
@@ -1045,12 +1078,18 @@ export function TerminalOverlay({
   if (!open) return null;
 
   const inputId = isInline ? "terminal-input-inline" : "terminal-input-overlay";
-  const terminalHeaderTitle = (
+  const defaultTerminalHeaderTitle = (
     <div className="flex min-w-0 items-center gap-2 text-primary">
       <TerminalIcon className="h-5 w-5 shrink-0" />
       <span className="truncate tracking-widest">fl97-mo@portfolio:{cwd}</span>
     </div>
   );
+  const terminalHeaderTitle =
+    isInline && inlineHeaderTitle ? (
+      <div className="flex min-w-0 items-center gap-2 text-primary">{inlineHeaderTitle}</div>
+    ) : (
+      defaultTerminalHeaderTitle
+    );
   const mowerCanvasPortal =
     mowerActive && typeof document !== "undefined"
       ? createPortal(
