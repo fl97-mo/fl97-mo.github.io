@@ -59,17 +59,23 @@ as soon as reasonably possible.
 License / Free to use
 ---------------------
 Unless otherwise stated, the website code/text content is dedicated to the public domain (CC0 1.0).
-Music is licensed separately (see "Music license" above).
+Music and audio effects are licensed separately (see "Music license" below).
 
 
 Music license (Attribution required)
 ------------------------------------
 Music tracks published on this website under the artist name "NOMKEE" are free to use
 for private and commercial projects, including downloads, remixes, edits, and redistribution,
-as long as credit is given.
+as long as credit is given. UI sound effects on this website are also original NOMKEE audio.
 
 Required credit format:
 "NOMKEE - <Track Name>"
+
+Unofficial remixes / reinterpretations
+--------------------------------------
+Some tracks are personal, unofficial NOMKEE reinterpretations inspired by existing works.
+The license above applies only to my own audio production and creative contribution.
+Any rights in the original works remain with their respective owners.
 
 Third-party content
 -------------------

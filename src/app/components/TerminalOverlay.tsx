@@ -167,6 +167,15 @@ const NOMKEE_TRACKS = [
   "NOMKEE - I KNOW YOU BETTER",
   "NOMKEE - DONT WANT TO LOOK AWAY",
   "NOMKEE - RAYGUNS EVERYWHERE",
+  "NOMKEE - BALLAD OF THE WANDERING ASTRO97 PART 1",
+  "NOMKEE - BALLAD OF THE WANDERING ASTRO97 PART 2",
+  "NOMKEE - CHERI",
+  "NOMKEE - FROM THE HOOD",
+  "NOMKEE - HOP",
+  "NOMKEE - MAN FROM KEPLER 22-B",
+  "NOMKEE - OCARINA OF TIME",
+  "NOMKEE - SONAR",
+  "NOMKEE - WANDERING THROUGH SPACE",
 ];
 
 function normalizeTarget(target: string) {
@@ -405,8 +414,19 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
   {
     name: "nomkee",
     usage: "nomkee",
-    description: "show music alias and tracks",
-    run: () => ({ output: [`alias: NOMKEE\n${NOMKEE_TRACKS.map((track) => `-- ${track}`).join("\n")}`] }),
+    description: "show music alias, license, and tracks",
+    run: () => ({
+      output: [
+        [
+          "alias: NOMKEE",
+          "audio: original music + UI sound effects",
+          "license: free to use with attribution",
+          'credit: "NOMKEE - <Track Name>"',
+          "tracks:",
+          NOMKEE_TRACKS.map((track) => `-- ${track}`).join("\n"),
+        ].join("\n"),
+      ],
+    }),
   },
   {
     name: "mission",

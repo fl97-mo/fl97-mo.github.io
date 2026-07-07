@@ -17,5 +17,7 @@ These libraries keep their own licenses in their published packages.
 
 ## Audio
 
-- Music tracks and UI sounds are credited to NOMKEE.
-
+- All music tracks and UI sound effects included in `public/` are original works by NOMKEE, unless a file or page states otherwise.
+- Music tracks published on this website under the artist name "NOMKEE" may be used with attribution as described in the website imprint / music license.
+- Tracks described as remixes or reinterpretations are unofficial NOMKEE versions. Any rights in the original works remain with their respective owners.
+- Required music credit format: `NOMKEE - <Track Name>`.
