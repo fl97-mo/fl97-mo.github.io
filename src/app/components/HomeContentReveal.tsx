@@ -61,6 +61,7 @@ export function HomeContentReveal({
   const skipSessionSequenceRef = useRef(instant);
   const shouldSkipSequence =
     skipSessionSequenceRef.current || !effectsEnabled || accessibilityEnabled || prefersReducedMotion;
+  const moduleSequenceStartedRef = useRef(shouldSkipSequence);
 
   const [visibleCount, setVisibleCount] = useState(
     shouldSkipSequence ? HOME_BOOT_MODULES.length : 0
@@ -78,21 +79,28 @@ export function HomeContentReveal({
     if (visibleCount > FOOTER_MODULE_INDEX) onFooterMounted?.();
   }, [onFooterMounted, visibleCount]);
 
+  const finishSessionBoot = () => {
+    onDoneRef.current?.();
+  };
+
   useEffect(() => {
     if (shouldSkipSequence) {
+      skipSessionSequenceRef.current = true;
+      moduleSequenceStartedRef.current = true;
       setVisibleCount(HOME_BOOT_MODULES.length);
       setLoaderDone(true);
       setBootDone(true);
-      onDoneRef.current?.();
+      finishSessionBoot();
       return;
     }
   }, [shouldSkipSequence]);
 
   useEffect(() => {
-    if (shouldSkipSequence || !bootDone) return;
+    if (shouldSkipSequence || !bootDone || moduleSequenceStartedRef.current) return;
 
     const timers: number[] = [];
 
+    moduleSequenceStartedRef.current = true;
     setVisibleCount(0);
     setLoaderDone(false);
 
@@ -107,7 +115,7 @@ export function HomeContentReveal({
     timers.push(
       window.setTimeout(() => {
         setLoaderDone(true);
-        onDoneRef.current?.();
+        finishSessionBoot();
       }, MODULE_START_DELAY_MS + (HOME_BOOT_MODULES.length - 1) * MODULE_STEP_MS + SEQUENCE_DONE_DELAY_MS)
     );
 
@@ -118,12 +126,13 @@ export function HomeContentReveal({
 
   const renderSection = (index: number, section: ReactNode) => {
     if (visibleCount <= index) return null;
+    const sectionInstant = shouldSkipSequence || loaderDone;
 
     return (
       <div
-        className={shouldSkipSequence ? undefined : "home-module-reveal"}
+        className={sectionInstant ? undefined : "home-module-reveal"}
         style={
-          shouldSkipSequence
+          sectionInstant
             ? undefined
             : { animationDelay: `${Math.min(index * 70, 210)}ms` }
         }

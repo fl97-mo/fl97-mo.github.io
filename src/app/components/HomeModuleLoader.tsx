@@ -59,6 +59,7 @@ export function HomeModuleLoader({
   const [inlineTerminalHasOpened, setInlineTerminalHasOpened] = useState(false);
   const [bootStep, setBootStep] = useState(animated ? 1 : BOOT_READY_STEP);
   const didFinishBootRef = useRef(!animated);
+  const completionAnimationHandledRef = useRef(!animated && complete);
 
   const isComplete = complete;
   const bootReady = bootStep >= BOOT_READY_STEP;
@@ -109,13 +110,18 @@ export function HomeModuleLoader({
       setCollapseState("expanded");
       setInlineTerminalOpen(false);
       setInlineTerminalHasOpened(false);
+      completionAnimationHandledRef.current = false;
       return;
     }
 
     if (!animated) {
       setCollapseState("collapsed");
+      completionAnimationHandledRef.current = true;
       return;
     }
+
+    if (completionAnimationHandledRef.current) return;
+    completionAnimationHandledRef.current = true;
 
     setCollapseState("expanded");
 

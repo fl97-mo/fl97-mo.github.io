@@ -1136,7 +1136,7 @@ export function TerminalOverlay({
             onMouseLeave={stopHoverNoise}
             onFocus={startInlineHeaderHoverNoise}
             onBlur={stopHoverNoise}
-            className="flex w-full items-center justify-between gap-3 border-b border-primary/30 bg-card/80 px-3 py-2 text-left transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="flex h-14 w-full items-center justify-between gap-3 border-b border-primary/30 bg-card/80 px-4 text-left text-sm text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:px-5 sm:text-base"
             aria-label="Collapse terminal"
           >
             {terminalHeaderTitle}
