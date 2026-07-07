@@ -646,28 +646,6 @@ function drawMatrixRain(
   }
 }
 
-function usePrefersReducedMotion() {
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReducedMotion(query.matches);
-    update();
-
-    if (query.addEventListener) {
-      query.addEventListener("change", update);
-      return () => query.removeEventListener("change", update);
-    }
-
-    query.addListener(update);
-    return () => query.removeListener(update);
-  }, []);
-
-  return reducedMotion;
-}
-
 export function TerminalOverlay({
   open,
   activeTab,
@@ -693,7 +671,6 @@ export function TerminalOverlay({
   } = useUI();
 
   const isInline = variant === "inline";
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -721,7 +698,7 @@ export function TerminalOverlay({
   const [matrixActive, setMatrixActive] = useState(false);
   const [lines, setLines] = useState<TerminalLine[]>(initialLinesRef.current.lines);
 
-  const motionDisabled = !effectsEnabled || accessibilityEnabled || prefersReducedMotion;
+  const motionDisabled = !effectsEnabled || accessibilityEnabled;
   const eqActiveLabel = useMemo(() => {
     const activeTrack = eqQueue.find((track) => track.id === eqActiveId);
     return activeTrack?.title ?? "none";
