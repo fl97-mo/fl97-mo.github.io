@@ -406,7 +406,7 @@ export default function App() {
             </div>
             <p id="eq-warning-copy" className="text-sm leading-relaxed">
               Be cautious: this EQ uses flashy visual elements. If you have sensory
-              sensitivity or prefer reduced stimulation, you might want to leave A11Y-Mode on.
+              sensitivity or prefer reduced stimulation, you might want to keep A11Y-Mode on.
             </p>
             <button
               type="button"
