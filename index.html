@@ -16,6 +16,20 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
 
+    <script>
+      (() => {
+        try {
+          const hasStoredA11y = window.sessionStorage.getItem("ui.accessibilityEnabled.session") !== null;
+          const storedA11y = window.sessionStorage.getItem("ui.accessibilityEnabled.session") === "1";
+          const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+
+          if (storedA11y || (!hasStoredA11y && reduceMotion)) {
+            document.documentElement.dataset.accessibility = "on";
+          }
+        } catch {}
+      })();
+    </script>
+
     <style>
       html,
       body {

@@ -30,6 +30,7 @@ type UIState = {
   soundEnabled: boolean;
   effectsEnabled: boolean;
   accessibilityEnabled: boolean;
+  accessibilityAutoDetected: boolean;
   crtColor: string;
   colorPickerOpen: boolean;
   introDone: boolean;
@@ -38,6 +39,7 @@ type UIState = {
   setSoundEnabled: (v: boolean) => void;
   setEffectsEnabled: (v: boolean) => void;
   setAccessibilityEnabled: (v: boolean) => void;
+  dismissAccessibilityAutoDetected: () => void;
   setCrtColor: (hex: string) => void;
   openColorPicker: () => void;
   closeColorPicker: () => void;
@@ -63,6 +65,7 @@ const UIContext = createContext<UIState | null>(null);
 const SS_SOUND = "ui.soundEnabled.session";
 const SS_EFFECTS = "ui.effectsEnabled.session";
 const SS_ACCESSIBILITY = "ui.accessibilityEnabled.session";
+const SS_ACCESSIBILITY_MANUAL = "ui.accessibilityManual.session";
 const SS_CRT_COLOR = "ui.crtColor.session";
 const SS_INTRO_DONE = "ui.introDone.session";
 const SS_HOME_REVEAL_DONE = "ui.homeRevealDone.session";
@@ -84,6 +87,19 @@ function writeBoolToSessionStorage(key: string, value: boolean) {
   try {
     window.sessionStorage.setItem(key, value ? "1" : "0");
   } catch {}
+}
+
+function hasSessionStorageKey(key: string) {
+  try {
+    return window.sessionStorage.getItem(key) !== null;
+  } catch {
+    return false;
+  }
+}
+
+function prefersReducedMotion() {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function readStrFromSessionStorage(key: string, fallback: string | null) {
@@ -111,9 +127,16 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [effectsEnabled, setEffectsEnabledState] = useState(() =>
     readBoolFromSessionStorage(SS_EFFECTS, true)
   );
-  const [accessibilityEnabled, setAccessibilityEnabledState] = useState(() =>
-    readBoolFromSessionStorage(SS_ACCESSIBILITY, false)
-  );
+  const [accessibilityEnabled, setAccessibilityEnabledState] = useState(() => {
+    if (hasSessionStorageKey(SS_ACCESSIBILITY)) {
+      return readBoolFromSessionStorage(SS_ACCESSIBILITY, false);
+    }
+    return prefersReducedMotion();
+  });
+  const [accessibilityAutoDetected, setAccessibilityAutoDetected] = useState(() => {
+    if (hasSessionStorageKey(SS_ACCESSIBILITY_MANUAL)) return false;
+    return !hasSessionStorageKey(SS_ACCESSIBILITY) && prefersReducedMotion();
+  });
   const [crtColor, setCrtColorState] = useState(() =>
     normalizeCrtColor(readStrFromSessionStorage(SS_CRT_COLOR, DEFAULT_CRT_COLOR))
   );
@@ -146,7 +169,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
     const se = readBoolFromSessionStorage(SS_SOUND, false);
     const ee = readBoolFromSessionStorage(SS_EFFECTS, true);
-    const ae = readBoolFromSessionStorage(SS_ACCESSIBILITY, false);
+    const accessibilityHasSessionValue = hasSessionStorageKey(SS_ACCESSIBILITY);
+    const accessibilityWasManual = hasSessionStorageKey(SS_ACCESSIBILITY_MANUAL);
+    const reducedMotion = prefersReducedMotion();
+    const ae = accessibilityHasSessionValue
+      ? readBoolFromSessionStorage(SS_ACCESSIBILITY, false)
+      : reducedMotion;
     const color = normalizeCrtColor(readStrFromSessionStorage(SS_CRT_COLOR, DEFAULT_CRT_COLOR));
     const id = readBoolFromSessionStorage(SS_INTRO_DONE, false);
     const hrd = id && readBoolFromSessionStorage(SS_HOME_REVEAL_DONE, false);
@@ -154,15 +182,38 @@ export function UIProvider({ children }: { children: ReactNode }) {
     setSoundEnabledState(se);
     setEffectsEnabledState(ee);
     setAccessibilityEnabledState(ae);
+    setAccessibilityAutoDetected(!accessibilityWasManual && !accessibilityHasSessionValue && reducedMotion);
     setCrtColorState(color);
     setIntroDone(id);
     setHomeRevealDone(hrd);
 
-    if (se) {
+    if (se && !ae) {
       primeAudio(["TERM", "BTN_MECH", "STATIC", "TYPING"])
         .then(() => startStatic())
         .catch(() => {});
     }
+
+    if (!window.matchMedia) return;
+
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateFromPreference = () => {
+      if (!query.matches || hasSessionStorageKey(SS_ACCESSIBILITY_MANUAL)) return;
+
+      setAccessibilityEnabledState(true);
+      setAccessibilityAutoDetected(true);
+      writeBoolToSessionStorage(SS_ACCESSIBILITY, true);
+      stopStatic();
+      stopTypingLoop();
+      stopHoverNoise();
+    };
+
+    if (query.addEventListener) {
+      query.addEventListener("change", updateFromPreference);
+      return () => query.removeEventListener("change", updateFromPreference);
+    }
+
+    query.addListener(updateFromPreference);
+    return () => query.removeListener(updateFromPreference);
   }, []);
 
   useEffect(() => {
@@ -198,7 +249,19 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   const setAccessibilityEnabled = useCallback((v: boolean) => {
     setAccessibilityEnabledState(v);
+    setAccessibilityAutoDetected(false);
     writeBoolToSessionStorage(SS_ACCESSIBILITY, v);
+    writeBoolToSessionStorage(SS_ACCESSIBILITY_MANUAL, true);
+
+    if (v) {
+      stopStatic();
+      stopTypingLoop();
+      stopHoverNoise();
+    }
+  }, []);
+
+  const dismissAccessibilityAutoDetected = useCallback(() => {
+    setAccessibilityAutoDetected(false);
   }, []);
 
   const setCrtColor = useCallback((hex: string) => {
@@ -294,6 +357,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
       soundEnabled,
       effectsEnabled,
       accessibilityEnabled,
+      accessibilityAutoDetected,
       crtColor,
       colorPickerOpen,
       introDone,
@@ -301,6 +365,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
       setSoundEnabled,
       setEffectsEnabled,
       setAccessibilityEnabled,
+      dismissAccessibilityAutoDetected,
       setCrtColor,
       openColorPicker,
       closeColorPicker,
@@ -322,6 +387,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
       soundEnabled,
       effectsEnabled,
       accessibilityEnabled,
+      accessibilityAutoDetected,
       crtColor,
       colorPickerOpen,
       introDone,
@@ -329,6 +395,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
       setSoundEnabled,
       setEffectsEnabled,
       setAccessibilityEnabled,
+      dismissAccessibilityAutoDetected,
       setCrtColor,
       openColorPicker,
       closeColorPicker,
