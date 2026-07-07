@@ -37,7 +37,9 @@ export const COL_GAP_PX = 2;
 export const SEG_GAP_PX = 3;
 
 export const GRID_ALPHA = 0.06;
-export const SCAN_ALPHA = 0.045;
+export const SPECTRUM_GUIDE_EVERY_SEGMENTS = 1;
+export const SPECTRUM_GUIDE_MAJOR_EVERY_SEGMENTS = 3;
+export const SPECTRUM_GUIDE_LINE_PX = 2;
 
 export const TICKS_HZ = [32, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000] as const;
 

@@ -6,6 +6,9 @@ import { drawWalkers } from "./render/scene";
 type Ref<T> = { current: T };
 
 export type UseEqLoopArgs = {
+  visualResetKey: string;
+  visualDisabled: boolean;
+
   tickList: number[];
   visEdges: number[];
 
@@ -81,6 +84,35 @@ export function useEqLoop(args: UseEqLoopArgs) {
 
   const ptrStateRef = useRef<PointerState>({ has: false, cx: 0, cy: 0, down: false });
 
+  const resetTransientVisualState = () => {
+    specCtxRef.current = null;
+    walkCtxRef.current = null;
+    lastRef.current = performance.now();
+
+    args.bgPixRef.current = null;
+    args.starsRef.current = null;
+    args.starsMetaRef.current = null;
+    args.trailRef.current.length = 0;
+    args.particlesRef.current.length = 0;
+    args.prevWalkerXRef.current = null;
+
+    args.waveAmpRef.current = 0;
+    args.waveAlphaRef.current = 0;
+    args.waveSpeedRef.current = 0.75;
+    args.wavePhaseRef.current = 0;
+    args.lookYawRef.current = 0;
+    args.lookPitchRef.current = 0;
+    args.lookActiveRef.current = 0;
+    args.sceneVisRef.current = 0;
+    args.walkerMotionRef.current = 0;
+  };
+
+  const clearCanvas = (el: HTMLCanvasElement | null) => {
+    if (!el) return;
+    const g = el.getContext("2d");
+    g?.clearRect(0, 0, el.width, el.height);
+  };
+
   const resizeCanvas = (el: HTMLCanvasElement, cssW: number, cssH: number, dpr: number) => {
     const W = Math.max(1, Math.round(cssW * dpr));
     const H = Math.max(1, Math.round(cssH * dpr));
@@ -98,6 +130,7 @@ export function useEqLoop(args: UseEqLoopArgs) {
       specCssRef.current = { w: r.width, h: r.height };
       resizeCanvas(spectrumEl, r.width, r.height, dpr);
       if (!specCtxRef.current) specCtxRef.current = spectrumEl.getContext("2d");
+      if (args.visualDisabled) clearCanvas(spectrumEl);
     }
 
     const walkersEl = args.walkersRef.current;
@@ -106,10 +139,14 @@ export function useEqLoop(args: UseEqLoopArgs) {
       walkCssRef.current = { w: r.width, h: r.height };
       resizeCanvas(walkersEl, r.width, r.height, dpr);
       if (!walkCtxRef.current) walkCtxRef.current = walkersEl.getContext("2d");
+      if (args.visualDisabled) clearCanvas(walkersEl);
     }
   };
 
   useEffect(() => {
+    resetTransientVisualState();
+    measureOnce();
+
     const spectrumEl = args.spectrumRef.current;
     const walkersEl = args.walkersRef.current;
 
@@ -129,10 +166,12 @@ export function useEqLoop(args: UseEqLoopArgs) {
             specCssRef.current = { w: cssW, h: cssH };
             resizeCanvas(el, cssW, cssH, dpr);
             if (!specCtxRef.current) specCtxRef.current = el.getContext("2d");
+            if (args.visualDisabled) clearCanvas(el);
           } else if (el === walkersEl) {
             walkCssRef.current = { w: cssW, h: cssH };
             resizeCanvas(el, cssW, cssH, dpr);
             if (!walkCtxRef.current) walkCtxRef.current = el.getContext("2d");
+            if (args.visualDisabled) clearCanvas(el);
           }
         }
       });
@@ -148,9 +187,17 @@ export function useEqLoop(args: UseEqLoopArgs) {
       if (ro) ro.disconnect();
       window.removeEventListener("resize", measureOnce);
     };
-  }, [args.spectrumRef, args.walkersRef]);
+  }, [args.spectrumRef, args.walkersRef, args.visualDisabled, args.visualResetKey]);
 
   useEffect(() => {
+    lastRef.current = performance.now();
+    if (args.visualDisabled) {
+      resetTransientVisualState();
+      clearCanvas(args.spectrumRef.current);
+      clearCanvas(args.walkersRef.current);
+      return;
+    }
+
     const step = (now: number) => {
       const dt = Math.min(0.05, Math.max(0.001, (now - lastRef.current) / 1000));
       lastRef.current = now;
@@ -254,5 +301,14 @@ export function useEqLoop(args: UseEqLoopArgs) {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [args.tickList, args.visEdges, args.spectrumRef, args.walkersRef, args.analyserRef, args.connectedRef]);
+  }, [
+    args.tickList,
+    args.visEdges,
+    args.spectrumRef,
+    args.walkersRef,
+    args.analyserRef,
+    args.connectedRef,
+    args.visualDisabled,
+    args.visualResetKey,
+  ]);
 }

@@ -231,6 +231,28 @@
     line-height: 1.5;
   }
 
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    transform: translateY(-150%);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius);
+    background: var(--background);
+    color: var(--primary);
+    padding: 0.65rem 0.85rem;
+    box-shadow: 0 0 0 2px var(--background), 0 0 14px var(--crt-glow-active);
+    transition: transform 120ms ease-out;
+  }
+
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
+  }
+
   :root[data-accessibility="on"] :focus-visible {
     outline: 3px solid var(--ring);
     outline-offset: 3px;

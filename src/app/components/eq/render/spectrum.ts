@@ -13,9 +13,11 @@ import {
   MIN_HZ,
   PEAK_DECAY,
   PEAK_THICK_PX,
-  SCAN_ALPHA,
   SEG_GAP_PX,
   SEGMENTS,
+  SPECTRUM_GUIDE_EVERY_SEGMENTS,
+  SPECTRUM_GUIDE_LINE_PX,
+  SPECTRUM_GUIDE_MAJOR_EVERY_SEGMENTS,
   VIS_COLUMNS,
 } from "../constants";
 import { clamp } from "../math";
@@ -113,15 +115,15 @@ export function drawSpectrum(
   const topPad = Math.max(0, Math.floor((plotH - usedH) / 2));
 
   if (GRID_ALPHA > 0) {
-    g.strokeStyle = crt.rgba(GRID_ALPHA);
-    g.lineWidth = 1;
-    for (let s = 0; s <= SEGMENTS; s++) {
-      const y = topPad + s * (segH + segGap);
-      const yy = Math.floor(y) + 0.5;
-      g.beginPath();
-      g.moveTo(0, yy);
-      g.lineTo(w, yy);
-      g.stroke();
+    const guideH = Math.min(segH, Math.max(1, Math.floor(SPECTRUM_GUIDE_LINE_PX * dpr)));
+
+    for (let row = 0; row < SEGMENTS; row += SPECTRUM_GUIDE_EVERY_SEGMENTS) {
+      const segmentY = topPad + row * (segH + segGap);
+      const y = Math.floor(segmentY + (segH - guideH) / 2);
+      const isMajor = row % SPECTRUM_GUIDE_MAJOR_EVERY_SEGMENTS === 0;
+
+      g.fillStyle = crt.rgba(GRID_ALPHA * (isMajor ? 1.5 : 0.68));
+      g.fillRect(0, y, w, guideH);
     }
   }
 
@@ -186,12 +188,6 @@ export function drawSpectrum(
         innerW,
         Math.max(1, Math.floor(PEAK_THICK_PX * dpr))
       );
-    }
-
-    if (SCAN_ALPHA > 0) {
-      g.fillStyle = crt.rgba(SCAN_ALPHA);
-      const step = Math.max(2, Math.floor(3 * dpr));
-      for (let y = 0; y < plotH; y += step) g.fillRect(0, y, w, 1);
     }
 
     g.strokeStyle = crt.rgba(GRID_ALPHA * 1.4);

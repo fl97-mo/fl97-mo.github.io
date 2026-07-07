@@ -209,6 +209,11 @@ export function AstronautLogoLab() {
     const gg = c.getContext("2d");
     if (!gg) return;
 
+    if (accessibilityEnabled) {
+      gg.clearRect(0, 0, c.width, c.height);
+      return;
+    }
+
     drawEqAstronaut(gg, c.width, c.height, params);
   }, [accessibilityEnabled, params]);
 
@@ -272,10 +277,22 @@ export function AstronautLogoLab() {
           <div className="relative border border-primary/15 rounded bg-black/95 p-2 overflow-hidden">
             <canvas
               ref={canvasRef}
-              role="img"
-              aria-label="Astronaut logo preview canvas"
-              className="w-full h-[360px] md:h-[420px] rounded"
+              role={accessibilityEnabled ? undefined : "img"}
+              aria-hidden={accessibilityEnabled}
+              aria-label={accessibilityEnabled ? undefined : "Astronaut logo preview canvas"}
+              className={`w-full h-[360px] md:h-[420px] rounded ${
+                accessibilityEnabled ? "opacity-0" : ""
+              }`}
             />
+
+            {accessibilityEnabled && (
+              <div
+                role="note"
+                className="absolute inset-2 flex items-center justify-center rounded border border-primary/30 bg-background text-center text-sm tracking-widest text-primary"
+              >
+                A11Y MODE: ASTRO PREVIEW VISUAL DISABLED
+              </div>
+            )}
 
             {effectsEnabled && !accessibilityEnabled && (
               <>

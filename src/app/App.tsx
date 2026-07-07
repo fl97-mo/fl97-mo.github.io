@@ -20,6 +20,17 @@ import { primeAudio, startStatic, stopStatic, playSound } from "./utils/sfx";
 import { TypewriterCursorProvider } from "./components/Typewriter";
 import { useUI } from "./store/ui";
 
+const MAIN_HEADINGS: Record<TabId, string> = {
+  home: "FL97 MO Portfolio",
+  systems: "Systems directory",
+  coding: "Coding directory",
+  music: "Music directory",
+  eq: "Equalizer directory",
+  astronaut: "Astronaut logo lab",
+  imprint: "Imprint",
+  privacy: "Privacy policy",
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [systemsTargetSlug, setSystemsTargetSlug] = useState<string | null>(null);
@@ -27,6 +38,7 @@ export default function App() {
 
   const primedRef = useRef(false);
   const terminalButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
 
   const {
     introDone,
@@ -128,6 +140,18 @@ export default function App() {
   return (
     <CRTScreen>
       <TypewriterCursorProvider>
+        <a
+          href="#main-content"
+          className="skip-link"
+          onClick={(event) => {
+            event.preventDefault();
+            mainRef.current?.focus({ preventScroll: true });
+            mainRef.current?.scrollIntoView({ block: "start" });
+          }}
+        >
+          Skip to main content
+        </a>
+
         <div
           aria-hidden={!navigationVisible}
           className={`home-nav-reveal-shell ${navigationVisible ? "is-visible" : ""} ${
@@ -147,7 +171,17 @@ export default function App() {
           </div>
         </div>
 
-        <main className="min-w-0 flex-1">
+        <main
+          id="main-content"
+          ref={mainRef}
+          tabIndex={-1}
+          aria-labelledby="page-title"
+          className="min-w-0 flex-1 focus:outline-none"
+        >
+          <h1 id="page-title" className="sr-only">
+            {MAIN_HEADINGS[activeTab]}
+          </h1>
+
           {activeTab === "home" && (
             <>
               <TerminalHeader introAlreadyDone={introDone} onIntroDone={markIntroDone} />
@@ -207,12 +241,12 @@ export default function App() {
                 }
                 setActiveTab("imprint");
               }}
-              className="text-primary/50 hover:text-primary transition-colors"
+              className="text-primary/70 hover:text-primary transition-colors"
             >
               [ IMPRINT ]
             </button>
 
-            <span className="text-primary/30">::</span>
+            <span className="text-primary/70" aria-hidden="true">::</span>
 
             <button
               onClick={() => {
@@ -222,7 +256,7 @@ export default function App() {
                 }
                 setActiveTab("privacy");
               }}
-              className="text-primary/50 hover:text-primary transition-colors"
+              className="text-primary/70 hover:text-primary transition-colors"
             >
               [ PRIVACY ]
             </button>

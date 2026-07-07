@@ -123,6 +123,9 @@ export function EqualizerPage() {
     setEqActiveId,
     setEqFile,
     cycleEqRepeat,
+    accessibilityEnabled,
+    effectsEnabled,
+    crtColor,
   } = useUI();
 
   const [loadedLabel, setLoadedLabel] = useState<string>("NO_TRACK");
@@ -448,6 +451,8 @@ useEffect(() => {
   }, [eqQueue, eqRepeat, activeIndex]);
 
   useEqLoop({
+    visualResetKey: `${accessibilityEnabled ? "a11y" : "crt"}:${effectsEnabled ? "fx" : "no-fx"}:${crtColor}`,
+    visualDisabled: accessibilityEnabled,
     tickList: TICK_LIST,
     visEdges: VIS_EDGES,
 
@@ -585,6 +590,19 @@ useEffect(() => {
       `-- REPEAT: ${eqRepeat}\n`
     );
   }, [activeTrack, loadedLabel, sourceKind, eqQueue, activeIndex, eqRepeat]);
+  const playerStatusText = useMemo(() => {
+    const queueLength = eqQueue?.length ?? 0;
+
+    if (error) return `Audio player error: ${error}`;
+    if (!queueLength) return "Audio player queue is empty. Upload audio files to start.";
+    if (!activeTrack || loadedLabel === "NO_TRACK") {
+      return `${queueLength} audio tracks in queue. No active track loaded.`;
+    }
+
+    return `${isPlaying ? "Playing" : "Paused"} ${loadedLabel}. Track ${
+      activeIndex + 1
+    } of ${queueLength}. Repeat mode ${eqRepeat}.`;
+  }, [activeIndex, activeTrack, eqQueue?.length, error, isPlaying, loadedLabel, eqRepeat]);
 
   return (
     <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded crt-glow-soft">
@@ -594,9 +612,14 @@ useEffect(() => {
         <span className="text-muted-foreground">]</span>
       </h2>
 
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {playerStatusText}
+      </p>
+
       <input
         ref={uploadInputRef}
         type="file"
+        aria-label="Upload local audio files"
         accept="audio/*,.aac,.aiff,.aif,.flac,.m4a,.mp3,.ogg,.opus,.wav,.webm"
         multiple
         className="sr-only"
@@ -613,6 +636,7 @@ useEffect(() => {
           <button
             type="button"
             onClick={() => uploadInputRef.current?.click()}
+            aria-label="Upload local audio files"
             className="inline-flex h-10 w-full items-center justify-center gap-2 px-3 text-sm border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
             style={{
               boxShadow:
@@ -627,6 +651,7 @@ useEffect(() => {
             <button
               type="button"
               onClick={clearQueue}
+              aria-label="Clear equalizer queue"
               className="inline-flex h-10 w-full items-center justify-center gap-2 px-3 text-sm border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all"
               style={{
                 boxShadow:
@@ -642,22 +667,42 @@ useEffect(() => {
 
       <div className="grid grid-cols-1 lg:grid-cols-[2.35fr_0.65fr] gap-4">
         <div className="border border-primary/20 rounded bg-background/40 p-4">
-          <div className="border border-primary/15 rounded bg-background/30 p-3 mb-2">
+          <div className="relative border border-primary/15 rounded bg-background/30 p-3 mb-2">
             <canvas
               ref={walkersRef}
-              role="img"
-              aria-label="Animated audio walker visualization"
-              className="w-full h-56 rounded"
+              role={accessibilityEnabled ? undefined : "img"}
+              aria-hidden={accessibilityEnabled}
+              aria-label={accessibilityEnabled ? undefined : "Animated audio walker visualization"}
+              className={`w-full h-56 rounded ${accessibilityEnabled ? "opacity-0" : ""}`}
             />
+
+            {accessibilityEnabled && (
+              <div
+                role="note"
+                className="absolute inset-3 flex items-center justify-center rounded border border-primary/30 bg-background text-center text-sm tracking-widest text-primary"
+              >
+                A11Y MODE: ASTRO WALKER VISUAL DISABLED
+              </div>
+            )}
           </div>
 
-          <div className="border border-primary/15 rounded bg-background/30 p-2">
+          <div className="relative border border-primary/15 rounded bg-background/30 p-2">
             <canvas
               ref={spectrumRef}
-              role="img"
-              aria-label="Audio spectrum visualization"
-              className="w-full h-64 rounded"
+              role={accessibilityEnabled ? undefined : "img"}
+              aria-hidden={accessibilityEnabled}
+              aria-label={accessibilityEnabled ? undefined : "Audio spectrum visualization"}
+              className={`w-full h-64 rounded ${accessibilityEnabled ? "opacity-0" : ""}`}
             />
+
+            {accessibilityEnabled && (
+              <div
+                role="note"
+                className="absolute inset-2 flex items-center justify-center rounded border border-primary/30 bg-background text-center text-sm tracking-widest text-primary"
+              >
+                A11Y MODE: AUDIO SPECTRUM VISUAL DISABLED
+              </div>
+            )}
           </div>
 
           <div className="mt-2 text-xs text-muted-foreground tracking-widest flex items-center justify-between gap-3">
@@ -736,7 +781,13 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
+              type="button"
               onClick={() => togglePlay()}
+              aria-label={
+                isPlaying
+                  ? `Pause ${loadedLabel === "NO_TRACK" ? "current audio track" : loadedLabel}`
+                  : `Play ${loadedLabel === "NO_TRACK" ? "selected audio track" : loadedLabel}`
+              }
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
               style={{
                 boxShadow:
@@ -747,7 +798,9 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             </button>
 
             <button
+              type="button"
               onClick={() => goDelta(-1, true)}
+              aria-label="Play previous track"
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
@@ -759,7 +812,9 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             </button>
 
             <button
+              type="button"
               onClick={() => goDelta(1, true)}
+              aria-label="Play next track"
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
@@ -771,7 +826,9 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             </button>
 
             <button
+              type="button"
               onClick={() => cycleEqRepeat()}
+              aria-label={`Cycle repeat mode. Current mode: ${eqRepeat}`}
               className="px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all"
               style={{
                 boxShadow:
@@ -783,12 +840,15 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
           </div>
 
           {error && (
-            <div className="mt-4 border border-destructive/40 bg-background/60 rounded p-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="mt-4 border border-destructive/40 bg-background/60 rounded p-3 text-sm text-destructive"
+            >
               {error}
             </div>
           )}
 
-          <audio ref={audioRef} preload="auto" />
+          <audio ref={audioRef} preload="auto" aria-hidden="true" />
         </div>
 
         <aside className="border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-4">

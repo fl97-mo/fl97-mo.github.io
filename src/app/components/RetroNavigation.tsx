@@ -138,7 +138,7 @@ export function RetroNavigation({
     stopHoverNoise();
 
     if (soundEnabled) {
-      primeAudio(["TERM"]).then(() => playSound("TERM", 0.2, 1.04, 80)).catch(() => {});
+      primeAudio(["TERM"]).then(() => playSound("TERM", 0.09, 1.0, 72, 36)).catch(() => {});
     }
 
     openColorPicker();

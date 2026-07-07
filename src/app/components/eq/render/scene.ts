@@ -10,7 +10,6 @@ import {
   LOOK_MAX_PITCH,
   LOOK_MAX_YAW,
   LOOK_RELEASE,
-  SCAN_ALPHA,
   SCENE_SILENCE_FLOOR,
   SCENE_SILENCE_SPAN,
   SCENE_VIS_ATTACK,
@@ -226,12 +225,6 @@ export function drawWalkers(
   const sceneVis = (deps.sceneVisRef.current = prevVis + (targetVis - prevVis) * kVis);
 
   drawStars(g, stars, dt, nowMs, an, freq, bass, mids, air, kick, beat, beatImpulse, sceneVis, beatCount, deps);
-
-  if (SCAN_ALPHA > 0) {
-    g.fillStyle = crt.rgba(SCAN_ALPHA * 0.55);
-    const step = Math.max(2, Math.floor(4 * dpr));
-    for (let y = 0; y < h; y += step) g.fillRect(0, y, w, 1);
-  }
 
   g.strokeStyle = crt.rgba(0.14 + bass * 0.22 + kick * 0.12);
   g.lineWidth = Math.max(1, Math.floor(1 * dpr));

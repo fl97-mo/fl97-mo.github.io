@@ -14,6 +14,7 @@ type HomeModuleLoaderProps = {
   animated: boolean;
   activeTab: TabId;
   onNavigate: (tab: TabId) => void;
+  onAbortBoot: () => void;
   onBootDone: () => void;
 };
 
@@ -38,6 +39,10 @@ const READY_DOT_FRAMES = [".", "..", "..."];
 const READY_DOT_INTERVAL_MS = 360;
 const READY_HOLD_BEFORE_COLLAPSE_MS = 1250;
 const CONTENT_FADE_BEFORE_COLLAPSE_MS = 360;
+const INLINE_TERMINAL_BODY_REVEAL_MS = 360;
+const INLINE_TERMINAL_BODY_HIDE_MS = 120;
+const INLINE_TERMINAL_COLLAPSE_MS = 700;
+const INLINE_TERMINAL_UNMOUNT_MS = INLINE_TERMINAL_BODY_HIDE_MS + INLINE_TERMINAL_COLLAPSE_MS + 40;
 type CollapseState = "expanded" | "settling" | "collapsed";
 
 export function HomeModuleLoader({
@@ -47,6 +52,7 @@ export function HomeModuleLoader({
   animated,
   activeTab,
   onNavigate,
+  onAbortBoot,
   onBootDone,
 }: HomeModuleLoaderProps) {
   const { soundEnabled } = useUI();
@@ -55,17 +61,23 @@ export function HomeModuleLoader({
   const [collapseState, setCollapseState] = useState<CollapseState>(
     !animated && complete ? "collapsed" : "expanded"
   );
-  const [inlineTerminalOpen, setInlineTerminalOpen] = useState(false);
+  const [inlineTerminalMounted, setInlineTerminalMounted] = useState(false);
+  const [inlineTerminalExpanded, setInlineTerminalExpanded] = useState(false);
+  const [inlineTerminalBodyVisible, setInlineTerminalBodyVisible] = useState(false);
   const [inlineTerminalHasOpened, setInlineTerminalHasOpened] = useState(false);
   const [bootStep, setBootStep] = useState(animated ? 1 : BOOT_READY_STEP);
   const didFinishBootRef = useRef(!animated);
   const completionAnimationHandledRef = useRef(!animated && complete);
+  const inlineBodyRevealTimerRef = useRef<number | null>(null);
+  const inlineCollapseTimerRef = useRef<number | null>(null);
+  const inlineCloseTimerRef = useRef<number | null>(null);
+  const inlineOpenRafRef = useRef<number | null>(null);
 
   const isComplete = complete;
   const bootReady = bootStep >= BOOT_READY_STEP;
   const collapsed = collapseState === "collapsed";
   const contentVisible = collapseState === "expanded";
-  const canOpenInlineTerminal = isComplete && collapsed && !inlineTerminalOpen;
+  const canOpenInlineTerminal = isComplete && collapsed && !inlineTerminalMounted;
   const readyDots = animated ? READY_DOT_FRAMES[readyDotFrame] : "...";
 
   useEffect(() => {
@@ -81,6 +93,10 @@ export function HomeModuleLoader({
   useEffect(() => {
     return () => {
       stopHoverNoise();
+      if (inlineBodyRevealTimerRef.current !== null) window.clearTimeout(inlineBodyRevealTimerRef.current);
+      if (inlineCollapseTimerRef.current !== null) window.clearTimeout(inlineCollapseTimerRef.current);
+      if (inlineCloseTimerRef.current !== null) window.clearTimeout(inlineCloseTimerRef.current);
+      if (inlineOpenRafRef.current !== null) window.cancelAnimationFrame(inlineOpenRafRef.current);
     };
   }, []);
 
@@ -108,7 +124,9 @@ export function HomeModuleLoader({
   useEffect(() => {
     if (!isComplete) {
       setCollapseState("expanded");
-      setInlineTerminalOpen(false);
+      setInlineTerminalMounted(false);
+      setInlineTerminalExpanded(false);
+      setInlineTerminalBodyVisible(false);
       setInlineTerminalHasOpened(false);
       completionAnimationHandledRef.current = false;
       return;
@@ -139,11 +157,57 @@ export function HomeModuleLoader({
     };
   }, [animated, isComplete]);
 
-  const openInlineTerminal = () => {
-    if (!canOpenInlineTerminal) return;
+  const openInlineTerminal = (abortLoading = false) => {
+    if (!abortLoading && !canOpenInlineTerminal) return;
     stopHoverNoise();
+    if (inlineBodyRevealTimerRef.current !== null) window.clearTimeout(inlineBodyRevealTimerRef.current);
+    if (inlineCollapseTimerRef.current !== null) window.clearTimeout(inlineCollapseTimerRef.current);
+    if (inlineCloseTimerRef.current !== null) window.clearTimeout(inlineCloseTimerRef.current);
+    if (inlineOpenRafRef.current !== null) window.cancelAnimationFrame(inlineOpenRafRef.current);
+
+    if (abortLoading) {
+      didFinishBootRef.current = true;
+      completionAnimationHandledRef.current = true;
+      setBootStep(BOOT_READY_STEP);
+      setCollapseState("collapsed");
+      onAbortBoot();
+    }
+
     setInlineTerminalHasOpened(true);
-    setInlineTerminalOpen(true);
+    setInlineTerminalMounted(true);
+    setInlineTerminalExpanded(false);
+    setInlineTerminalBodyVisible(false);
+
+    inlineOpenRafRef.current = window.requestAnimationFrame(() => {
+      setInlineTerminalExpanded(true);
+      inlineOpenRafRef.current = null;
+    });
+
+    inlineBodyRevealTimerRef.current = window.setTimeout(() => {
+      setInlineTerminalBodyVisible(true);
+      inlineBodyRevealTimerRef.current = null;
+    }, INLINE_TERMINAL_BODY_REVEAL_MS);
+  };
+
+  const closeInlineTerminal = () => {
+    if (!inlineTerminalMounted) return;
+    stopHoverNoise();
+    if (inlineBodyRevealTimerRef.current !== null) window.clearTimeout(inlineBodyRevealTimerRef.current);
+    if (inlineCollapseTimerRef.current !== null) window.clearTimeout(inlineCollapseTimerRef.current);
+    if (inlineCloseTimerRef.current !== null) window.clearTimeout(inlineCloseTimerRef.current);
+    if (inlineOpenRafRef.current !== null) window.cancelAnimationFrame(inlineOpenRafRef.current);
+
+    setInlineTerminalBodyVisible(false);
+
+    inlineCollapseTimerRef.current = window.setTimeout(() => {
+      setInlineTerminalExpanded(false);
+      inlineCollapseTimerRef.current = null;
+    }, INLINE_TERMINAL_BODY_HIDE_MS);
+
+    inlineCloseTimerRef.current = window.setTimeout(() => {
+      setInlineTerminalMounted(false);
+      inlineCloseTimerRef.current = null;
+    }, INLINE_TERMINAL_UNMOUNT_MS);
   };
 
   const startReadyHoverNoise = () => {
@@ -196,6 +260,13 @@ export function HomeModuleLoader({
       </span>
     </span>
   );
+  const loaderStatus = isComplete
+    ? "Home content loaded. Inline terminal is ready."
+    : !bootReady
+    ? "Starting home boot sequence."
+    : activeIndex !== null
+    ? `Loading ${modules[activeIndex]}. ${mountedCount} of ${modules.length} modules loaded.`
+    : `Loading home content. ${mountedCount} of ${modules.length} modules loaded.`;
 
   return (
     <section
@@ -206,21 +277,24 @@ export function HomeModuleLoader({
         crt-glow-soft
         transition-[height,padding,margin] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
         ${
-          inlineTerminalOpen
+          inlineTerminalExpanded
             ? "mb-12 h-[32rem] p-0 sm:h-[34rem] lg:h-[36rem]"
             : collapsed
             ? "mb-8 h-14 p-0"
             : "mb-12 h-[28rem] p-5 pt-8 sm:h-[29rem] sm:p-6 sm:pt-8"
         }
       `}
-      aria-live={isComplete ? "off" : "polite"}
     >
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {loaderStatus}
+      </p>
+
       <div
-        aria-hidden={!contentVisible || inlineTerminalOpen}
+        aria-hidden={!contentVisible || inlineTerminalMounted}
         className={`
           transition-[opacity,transform] duration-300 ease-out
           ${
-            contentVisible && !inlineTerminalOpen
+            contentVisible && !inlineTerminalMounted
               ? "translate-y-0 opacity-100"
               : "pointer-events-none -translate-y-2 opacity-0"
           }
@@ -302,21 +376,31 @@ export function HomeModuleLoader({
         )}
       </div>
 
-      {isComplete && !inlineTerminalOpen && (
+      {!isComplete && !inlineTerminalMounted && (
         <button
           type="button"
-          onClick={openInlineTerminal}
+          onClick={() => openInlineTerminal(true)}
+          className="absolute inset-0 z-10 cursor-pointer bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          aria-label="Abort loading animation and open terminal"
+        />
+      )}
+
+      {isComplete && !inlineTerminalMounted && (
+        <button
+          type="button"
+          onClick={() => openInlineTerminal()}
           disabled={!canOpenInlineTerminal}
           onMouseEnter={startReadyHoverNoise}
           onMouseLeave={stopHoverNoise}
           onFocus={startReadyHoverNoise}
           onBlur={stopHoverNoise}
           className={`
-            home-ready-reveal absolute inset-x-0 flex h-14 items-center px-4 text-left text-sm text-primary
+            absolute inset-x-0 flex h-14 items-center px-4 text-left text-sm text-primary
+            bg-card/80
             transition-[background-color,opacity,transform] duration-300 sm:px-5 sm:text-base
             hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none
             disabled:cursor-default disabled:hover:bg-transparent
-            ${inlineTerminalHasOpened ? "top-0" : "bottom-0"}
+            ${inlineTerminalHasOpened ? "top-0 border-b border-primary/30" : "home-ready-reveal bottom-0"}
           `}
           aria-label="Open inline terminal"
         >
@@ -324,21 +408,22 @@ export function HomeModuleLoader({
         </button>
       )}
 
-      {isComplete && (
+      {isComplete && inlineTerminalMounted && (
         <div
-          aria-hidden={!inlineTerminalOpen}
+          aria-hidden={!inlineTerminalExpanded}
           className={`
-            absolute inset-0 transition-opacity duration-300
-            ${inlineTerminalOpen ? "opacity-100" : "pointer-events-none opacity-0"}
+            absolute inset-0 overflow-hidden transition-opacity duration-300
+            ${inlineTerminalExpanded ? "opacity-100" : "pointer-events-none opacity-100"}
           `}
         >
           <TerminalOverlay
-            open={inlineTerminalOpen}
+            open={inlineTerminalMounted}
             activeTab={activeTab}
-            onClose={() => setInlineTerminalOpen(false)}
+            onClose={closeInlineTerminal}
             onNavigate={onNavigate}
             variant="inline"
             inlineHeaderTitle={readyLabel}
+            inlineBodyVisible={inlineTerminalBodyVisible}
           />
         </div>
       )}

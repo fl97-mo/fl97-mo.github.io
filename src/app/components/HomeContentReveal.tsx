@@ -83,6 +83,15 @@ export function HomeContentReveal({
     onDoneRef.current?.();
   };
 
+  const abortSessionBoot = () => {
+    skipSessionSequenceRef.current = true;
+    moduleSequenceStartedRef.current = true;
+    setVisibleCount(HOME_BOOT_MODULES.length);
+    setLoaderDone(true);
+    setBootDone(true);
+    finishSessionBoot();
+  };
+
   useEffect(() => {
     if (shouldSkipSequence) {
       skipSessionSequenceRef.current = true;
@@ -151,6 +160,7 @@ export function HomeContentReveal({
         animated={!shouldSkipSequence}
         activeTab={activeTab}
         onNavigate={onNavigate}
+        onAbortBoot={abortSessionBoot}
         onBootDone={() => setBootDone(true)}
       />
 

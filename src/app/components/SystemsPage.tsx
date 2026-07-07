@@ -2,6 +2,7 @@ import * as Accordion from "@radix-ui/react-accordion";
 import { ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useUI } from "../store/ui";
+import { handleAccordionArrowNavigation } from "../utils/accordionKeyboard";
 import { playSound, primeAudio } from "../utils/sfx";
 import { TypewriterText } from "./Typewriter";
 
@@ -72,9 +73,11 @@ const handleChange = (next: string[]) => {
 
   return (
     <Accordion.Root
+      data-accordion-root
       type="multiple"
       value={openSections}
       onValueChange={handleChange}
+      onKeyDownCapture={handleAccordionArrowNavigation}
       className="space-y-3"
     >
       {sections.map((sec) => (
@@ -84,7 +87,11 @@ const handleChange = (next: string[]) => {
           className="border border-primary/20 rounded bg-background/40"
         >
           <Accordion.Header>
-            <Accordion.Trigger className="group w-full px-3 sm:px-4 py-3 flex justify-between items-center text-left">
+            <Accordion.Trigger
+              data-accordion-trigger
+              aria-label={`${openSections.includes(sec.id) ? "Collapse" : "Expand"} section ${sec.title}`}
+              className="group w-full px-3 sm:px-4 py-3 flex justify-between items-center text-left"
+            >
               <div className="flex items-center gap-3">
                 <ChevronRight className="w-4 h-4 text-primary transition-transform group-data-[state=open]:rotate-90" />
                 <span className="text-primary">{sec.title}</span>
@@ -672,7 +679,11 @@ function SystemsPostItem({ post, isOpen }: { post: SystemsPost; isOpen: boolean 
       className="border border-primary/20 rounded bg-background/50"
     >
       <Accordion.Header>
-        <Accordion.Trigger className="group w-full p-3 sm:p-4 text-left flex justify-between items-start gap-3">
+        <Accordion.Trigger
+          data-accordion-trigger
+          aria-label={`${isOpen ? "Collapse" : "Expand"} systems post ${post.title}`}
+          className="group w-full p-3 sm:p-4 text-left flex justify-between items-start gap-3"
+        >
           <div className="flex-1">
             <div className="flex items-start gap-3">
               <ChevronRight className="w-5 h-5 mt-0.5 text-primary transition-transform group-data-[state=open]:rotate-90" />
@@ -799,9 +810,11 @@ const handlePostsChange = (next: string[]) => {
       </p>
 
       <Accordion.Root
+        data-accordion-root
         type="multiple"
         value={open}
         onValueChange={handlePostsChange}
+        onKeyDownCapture={handleAccordionArrowNavigation}
         className="space-y-4"
       >
         {SYSTEMS_POSTS.map((post) => (

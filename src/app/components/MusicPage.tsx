@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { TypewriterText } from "./Typewriter";
 import { useUI } from "../store/ui";
 import { playSoundAsync } from "../utils/sfx";
+import { handleAccordionArrowNavigation } from "../utils/accordionKeyboard";
 
 type MusicItem = {
   id: string;
@@ -254,7 +255,11 @@ function MusicItemRow({
       className="border border-primary/20 rounded bg-background/50 overflow-hidden"
     >
       <Accordion.Header>
-        <Accordion.Trigger className="group w-full p-4 text-left flex justify-between items-start outline-none">
+        <Accordion.Trigger
+          data-accordion-trigger
+          aria-label={`${isOpen ? "Collapse" : "Expand"} track details for ${item.name}`}
+          className="group w-full p-4 text-left flex justify-between items-start outline-none"
+        >
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <ChevronRight className="w-5 h-5 text-primary transition-transform group-data-[state=open]:rotate-90" />
@@ -304,6 +309,7 @@ function MusicItemRow({
                 <a
                   href={downloadHref(downloadFile)}
                   download={downloadFile}
+                  aria-label={`Download ${item.name}`}
                   className="px-4 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary/80 hover:text-primary hover:border-primary crt-hover-glow-soft transition-all text-xs tracking-widest"
                   style={{
                     boxShadow:
@@ -420,6 +426,7 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
         <button
           type="button"
           onClick={openEqualizer}
+          aria-label="Open equalizer upload page"
           className="inline-flex items-center justify-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
           style={{
             boxShadow:
@@ -442,6 +449,7 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
             <button
               type="button"
               onClick={clearFilters}
+              aria-label="Clear music filters"
               className="self-start text-xs tracking-widest text-primary/70 hover:text-primary transition-colors"
             >
               [ CLEAR ]
@@ -454,6 +462,7 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
             type="button"
             onClick={clearFilters}
             aria-pressed={!activeTags.length}
+            aria-label="Show all music tracks"
             className={`px-3 py-1.5 rounded border text-xs tracking-widest transition-all ${
               !activeTags.length
                 ? "border-primary bg-primary/15 text-primary crt-hover-glow-soft"
@@ -472,6 +481,7 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
                 type="button"
                 onClick={() => toggleTag(tag)}
                 aria-pressed={active}
+                aria-label={`${active ? "Remove" : "Add"} music filter ${tag}`}
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded border text-xs tracking-widest transition-all ${
                   active
                     ? "border-primary bg-primary/15 text-primary crt-hover-glow-soft"
@@ -479,14 +489,21 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
                 }`}
               >
                 <span>{tag}</span>
-                <span className="text-[10px] text-primary/60">{count}</span>
+                <span className="text-xs text-primary/60">{count}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <Accordion.Root type="multiple" value={open} onValueChange={handleChange} className="space-y-4">
+      <Accordion.Root
+        data-accordion-root
+        type="multiple"
+        value={open}
+        onValueChange={handleChange}
+        onKeyDownCapture={handleAccordionArrowNavigation}
+        className="space-y-4"
+      >
         {filteredItems.map((item) => (
           <MusicItemRow
             key={item.id}

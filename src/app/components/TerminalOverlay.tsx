@@ -16,6 +16,7 @@ type TerminalOverlayProps = {
   onNavigate: (tab: TabId) => void;
   variant?: "overlay" | "inline";
   inlineHeaderTitle?: ReactNode;
+  inlineBodyVisible?: boolean;
 };
 
 type TerminalLineKind = "input" | "output" | "error" | "system";
@@ -208,6 +209,21 @@ function cdToTarget(args: string[], ctx: TerminalCommandContext): TerminalResult
 
 function yesNo(value: boolean) {
   return value ? "ON" : "OFF";
+}
+
+function animationBlockedMessage(commandName: string, ctx: TerminalCommandContext) {
+  const reasons: string[] = [];
+  if (!ctx.effectsEnabled) reasons.push("effects turned off");
+  if (ctx.accessibilityEnabled) reasons.push("a11y turned on");
+
+  const reason =
+    reasons.length === 0
+      ? "reduced motion requested"
+      : reasons.length === 1
+      ? reasons[0]
+      : `${reasons.slice(0, -1).join(", ")} and ${reasons[reasons.length - 1]}`;
+
+  return `${commandName} animation not run: ${reason}.`;
 }
 
 function tabLabel(tab: TabId) {
@@ -436,7 +452,9 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
     usage: "matrix",
     description: "run a short falling-code terminal effect",
     run: (_args, ctx) => {
-      if (ctx.motionDisabled) return { output: ["matrix.sys skipped: motion disabled"] };
+      if (ctx.motionDisabled) {
+        return { output: [animationBlockedMessage("matrix.sys", ctx)], kind: "error" };
+      }
       ctx.triggerMatrix();
       return { output: ["matrix.sys streaming..."] };
     },
@@ -460,7 +478,9 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
     usage: "lawnmower",
     description: "run a tiny temporary mowing animation",
     run: (_args, ctx) => {
-      if (ctx.motionDisabled) return { output: ["lawnmower.exe skipped: motion disabled"] };
+      if (ctx.motionDisabled) {
+        return { output: [animationBlockedMessage("lawnmower.exe", ctx)], kind: "error" };
+      }
       ctx.triggerMower();
       return { output: ["lawnmower.exe started"] };
     },
@@ -674,6 +694,7 @@ export function TerminalOverlay({
   onNavigate,
   variant = "overlay",
   inlineHeaderTitle,
+  inlineBodyVisible = true,
 }: TerminalOverlayProps) {
   const {
     soundEnabled,
@@ -840,8 +861,9 @@ export function TerminalOverlay({
 
   useEffect(() => {
     if (!open) return;
+    if (isInline && !inlineBodyVisible) return;
     window.setTimeout(() => inputRef.current?.focus(), 0);
-  }, [open]);
+  }, [inlineBodyVisible, isInline, open]);
 
   useEffect(() => {
     if (!homeRevealDone || homeBootTranscriptLoadedRef.current || terminalTouchedRef.current) return;
@@ -1156,7 +1178,14 @@ export function TerminalOverlay({
           </div>
         )}
 
-        <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div
+          aria-hidden={isInline && !inlineBodyVisible}
+          className={`relative min-h-0 flex-1 overflow-hidden transition-[opacity,transform] duration-300 ease-out ${
+            isInline && !inlineBodyVisible
+              ? "pointer-events-none translate-y-1 opacity-0"
+              : "translate-y-0 opacity-100"
+          }`}
+        >
           {matrixActive && (
             <canvas
               ref={matrixCanvasRef}

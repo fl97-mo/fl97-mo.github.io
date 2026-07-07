@@ -32,10 +32,12 @@ export function ColorPickerDialog() {
 
   if (!colorPickerOpen || typeof document === "undefined") return null;
 
-  const selectColor = (hex: string) => {
+  const selectColor = (hex: string, withSound = true) => {
     if (accessibilityEnabled) return;
     setCrtColor(hex);
-    if (soundEnabled) void playSoundAsync("TERM", 0.1, 1.08).catch(() => {});
+    if (withSound && soundEnabled) {
+      void playSoundAsync("TERM", 0.045, 1.0, 72, 36).catch(() => {});
+    }
   };
 
   return createPortal(
@@ -125,7 +127,7 @@ export function ColorPickerDialog() {
                       <input
                         type="color"
                         value={crtColor}
-                        onChange={(event) => selectColor(event.target.value)}
+                        onChange={(event) => selectColor(event.target.value, false)}
                         className="h-8 w-12 cursor-pointer border border-primary/40 bg-background p-0.5"
                         aria-label="Custom CRT color"
                       />

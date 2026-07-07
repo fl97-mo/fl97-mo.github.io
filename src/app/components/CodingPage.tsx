@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { TypewriterText } from "./Typewriter";
 import { useUI } from "../store/ui";
+import { handleAccordionArrowNavigation } from "../utils/accordionKeyboard";
 import { playSound, primeAudio } from "../utils/sfx";
 
 type CodingItem = {
@@ -57,7 +58,11 @@ function CodingItemRow({ item, isOpen }: { item: CodingItem; isOpen: boolean }) 
       className="border border-primary/20 rounded bg-background/50"
     >
       <Accordion.Header>
-        <Accordion.Trigger className="group w-full p-4 text-left flex justify-between items-start outline-none">
+        <Accordion.Trigger
+          data-accordion-trigger
+          aria-label={`${isOpen ? "Collapse" : "Expand"} coding details for ${item.name}`}
+          className="group w-full p-4 text-left flex justify-between items-start outline-none"
+        >
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <ChevronRight className="w-5 h-5 text-primary transition-transform group-data-[state=open]:rotate-90" />
@@ -128,9 +133,11 @@ export function CodingPage() {
       </p>
 
       <Accordion.Root
+        data-accordion-root
         type="multiple"
         value={open}
         onValueChange={handleChange}
+        onKeyDownCapture={handleAccordionArrowNavigation}
         className="space-y-4"
       >
         {ITEMS.map((item) => (

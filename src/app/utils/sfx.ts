@@ -60,7 +60,7 @@ export async function primeAudio(names?: readonly SfxName[]) {
   await Promise.all(list.map((n) => ensureLoaded(n, audioCtx)));
 }
 
-export function playSound(name: SfxName, volume = 1, playbackRate = 1.0, attackMs = 0) {
+export function playSound(name: SfxName, volume = 1, playbackRate = 1.0, attackMs = 0, delayMs = 0) {
   const now = performance.now();
   if (lastPlay[name] && now - lastPlay[name]! < 70) return;
   lastPlay[name] = now;
@@ -76,28 +76,29 @@ export function playSound(name: SfxName, volume = 1, playbackRate = 1.0, attackM
   src.buffer = buffer;
   src.playbackRate.value = playbackRate;
 
-  const t0 = audioCtx.currentTime;
+  const t0 = audioCtx.currentTime + Math.max(0, delayMs) / 1000;
   const v = Math.max(0, volume);
 
   if (attackMs > 0) {
-    gain.gain.setValueAtTime(0.001, t0);
+    gain.gain.setValueAtTime(0, t0);
     gain.gain.linearRampToValueAtTime(v, t0 + attackMs / 1000);
   } else {
     gain.gain.setValueAtTime(v, t0);
   }
 
   src.connect(gain).connect(audioCtx.destination);
-  src.start();
+  src.start(t0);
 }
 
 export async function playSoundAsync(
   name: SfxName,
   volume = 1,
   playbackRate = 1.0,
-  attackMs = 0
+  attackMs = 0,
+  delayMs = 0
 ) {
   await primeAudio([name]);
-  playSound(name, volume, playbackRate, attackMs);
+  playSound(name, volume, playbackRate, attackMs, delayMs);
 }
 
 export function playMechClick() {
