@@ -16,6 +16,20 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
 
+    <script>
+      (() => {
+        try {
+          const hasStoredA11y = window.sessionStorage.getItem("ui.accessibilityEnabled.session") !== null;
+          const storedA11y = window.sessionStorage.getItem("ui.accessibilityEnabled.session") === "1";
+          const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+
+          if (storedA11y || (!hasStoredA11y && reduceMotion)) {
+            document.documentElement.dataset.accessibility = "on";
+          }
+        } catch {}
+      })();
+    </script>
+
     <style>
       html,
       body {
@@ -29,11 +43,11 @@
         visibility: hidden;
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-Dc6T1CWF.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DY7ZekKA.css">
+    <script type="module" crossorigin src="/assets/index-CNxkL3Cs.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CntO7cbg.css">
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
