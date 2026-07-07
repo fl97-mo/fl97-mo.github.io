@@ -6,11 +6,12 @@ interface CRTScreenProps {
 }
 
 export function CRTScreen({ children }: CRTScreenProps) {
-  const { effectsEnabled } = useUI();
+  const { accessibilityEnabled, effectsEnabled } = useUI();
+  const showCrtEffects = effectsEnabled && !accessibilityEnabled;
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
-      {effectsEnabled && (
+      {showCrtEffects && (
         <>
           <div className="pointer-events-none fixed inset-0 z-50 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15)_1px,transparent_1px,transparent_2px)]" />
           <div

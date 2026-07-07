@@ -115,6 +115,9 @@ export function EqualizerPage() {
   const forceAutoplayRef = useRef(false);
 
   const {
+    accessibilityEnabled,
+    effectsEnabled,
+    crtColor,
     eqQueue,
     eqActiveId,
     eqFiles,
@@ -123,9 +126,6 @@ export function EqualizerPage() {
     setEqActiveId,
     setEqFile,
     cycleEqRepeat,
-    accessibilityEnabled,
-    effectsEnabled,
-    crtColor,
   } = useUI();
 
   const [loadedLabel, setLoadedLabel] = useState<string>("NO_TRACK");
@@ -873,6 +873,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
                   const label = `${t.artist ? `${t.artist} — ` : ""}${t.title}`;
                   return (
                     <button
+                      type="button"
                       key={t.id}
                       aria-current={active ? "true" : undefined}
                       aria-label={`${active ? "Current track" : "Load track"}: ${label}`}

@@ -52,6 +52,7 @@ export function ContactSection() {
               href={contact.href}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Open ${contact.label} profile in a new tab: ${contact.value}`}
               onClick={handleOpen}
               className="
                 flex items-center gap-3
@@ -59,6 +60,7 @@ export function ContactSection() {
                 hover:text-primary
                 transition-colors
                 group
+                focus:outline-none focus:ring-2 focus:ring-primary/50
               "
             >
               <Icon className="w-5 h-5 text-primary" />

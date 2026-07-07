@@ -8,16 +8,19 @@ export function AboutSection() {
       </h2>
       <div className="space-y-3 text-muted-foreground">
         <p>
-          <span className="text-primary">{'>'}</span> I experiment with small software systems and like creating music.
+          <span className="text-primary">{'>'}</span> I build software systems and automations.
         </p>
         <p>
-          <span className="text-primary">{'>'}</span> Automations and tools that help with daily life.
+          <span className="text-primary">{'>'}</span> I like tools that make everyday work feel lighter, clearer, or just more fun.
         </p>
         <p>
-          <span className="text-primary">{'>'}</span> I like creating electronic music.
+          <span className="text-primary">{'>'}</span> I also create electronic music and bring that sound-design brain into my interfaces.
         </p>
         <p>
-          <span className="text-primary">{'>'}</span> LOCATION: GERMANY
+          <span className="text-primary">{'>'}</span> CURRENT LOCATION: GERMANY
+        </p>
+        <p>
+          <span className="text-primary">{'>'}</span> STATUS: building and learning
         </p>
       </div>
     </section>

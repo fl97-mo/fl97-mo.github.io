@@ -146,7 +146,7 @@ export function RetroNavigation({
 
   return (
     <div className="mb-8">
-      <nav className="border-2 border-primary/40 bg-card/50 p-2 rounded crt-glow-soft">
+      <nav aria-label="Primary site navigation" className="border-2 border-primary/40 bg-card/50 p-2 rounded crt-glow-soft">
         <div className="grid gap-2 md:gap-3 2xl:grid-cols-[1fr_auto] 2xl:items-center">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-[auto_repeat(6,minmax(0,1fr))]">
             <button
@@ -180,6 +180,7 @@ export function RetroNavigation({
                 <button
                   key={item.id}
                   type="button"
+                  aria-current={isActive ? "page" : undefined}
                   onClick={() => handleTabClick(item.id)}
                   className={`
                     w-full h-12 xl:h-11

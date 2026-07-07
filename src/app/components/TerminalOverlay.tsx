@@ -7,6 +7,7 @@ import type { TabId } from "./RetroNavigation";
 import { useUI } from "../store/ui";
 import { getCrtPalette } from "../utils/crtTheme";
 import { playSoundAsync, primeAudio, startHoverNoise, stopHoverNoise } from "../utils/sfx";
+import { useFocusTrap } from "../utils/useFocusTrap";
 import { HOME_BOOT_TRANSCRIPT_LINES } from "./homeBootSequence";
 
 type TerminalOverlayProps = {
@@ -167,6 +168,15 @@ const NOMKEE_TRACKS = [
   "NOMKEE - I KNOW YOU BETTER",
   "NOMKEE - DONT WANT TO LOOK AWAY",
   "NOMKEE - RAYGUNS EVERYWHERE",
+  "NOMKEE - BALLAD OF THE WANDERING ASTRO97 PART 1",
+  "NOMKEE - BALLAD OF THE WANDERING ASTRO97 PART 2",
+  "NOMKEE - CHERI",
+  "NOMKEE - FROM THE HOOD",
+  "NOMKEE - HOP",
+  "NOMKEE - MAN FROM KEPLER 22-B",
+  "NOMKEE - OCARINA OF TIME",
+  "NOMKEE - SONAR",
+  "NOMKEE - WANDERING THROUGH SPACE",
 ];
 
 function normalizeTarget(target: string) {
@@ -420,8 +430,19 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
   {
     name: "nomkee",
     usage: "nomkee",
-    description: "show music alias and tracks",
-    run: () => ({ output: [`alias: NOMKEE\n${NOMKEE_TRACKS.map((track) => `-- ${track}`).join("\n")}`] }),
+    description: "show music alias, license, and tracks",
+    run: () => ({
+      output: [
+        [
+          "alias: NOMKEE",
+          "audio: original music + UI sound effects",
+          "license: free to use with attribution",
+          'credit: "NOMKEE - <Track Name>"',
+          "tracks:",
+          NOMKEE_TRACKS.map((track) => `-- ${track}`).join("\n"),
+        ].join("\n"),
+      ],
+    }),
   },
   {
     name: "mission",
@@ -665,28 +686,6 @@ function drawMatrixRain(
   }
 }
 
-function usePrefersReducedMotion() {
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReducedMotion(query.matches);
-    update();
-
-    if (query.addEventListener) {
-      query.addEventListener("change", update);
-      return () => query.removeEventListener("change", update);
-    }
-
-    query.addListener(update);
-    return () => query.removeListener(update);
-  }, []);
-
-  return reducedMotion;
-}
-
 export function TerminalOverlay({
   open,
   activeTab,
@@ -713,7 +712,6 @@ export function TerminalOverlay({
   } = useUI();
 
   const isInline = variant === "inline";
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -741,7 +739,7 @@ export function TerminalOverlay({
   const [matrixActive, setMatrixActive] = useState(false);
   const [lines, setLines] = useState<TerminalLine[]>(initialLinesRef.current.lines);
 
-  const motionDisabled = !effectsEnabled || accessibilityEnabled || prefersReducedMotion;
+  const motionDisabled = !effectsEnabled || accessibilityEnabled;
   const eqActiveLabel = useMemo(() => {
     const activeTrack = eqQueue.find((track) => track.id === eqActiveId);
     return activeTrack?.title ?? "none";
@@ -865,6 +863,13 @@ export function TerminalOverlay({
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }, [inlineBodyVisible, isInline, open]);
 
+  useFocusTrap({
+    active: open && !isInline && !colorPickerOpen,
+    containerRef: panelRef,
+    initialFocusRef: inputRef,
+    onEscape: onClose,
+  });
+
   useEffect(() => {
     if (!homeRevealDone || homeBootTranscriptLoadedRef.current || terminalTouchedRef.current) return;
 
@@ -873,18 +878,6 @@ export function TerminalOverlay({
     homeBootTranscriptLoadedRef.current = true;
     setLines(next.lines);
   }, [homeRevealDone]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (colorPickerOpen) return;
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [colorPickerOpen, onClose, open]);
 
   useEffect(() => {
     outputRef.current?.scrollTo({ top: outputRef.current.scrollHeight });
