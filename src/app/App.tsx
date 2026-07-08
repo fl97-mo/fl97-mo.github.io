@@ -164,10 +164,11 @@ export default function App() {
   }, [accessibilityEnabled, effectsEnabled, homeRevealDone]);
 
   useEffect(() => {
-    if (activeTab === "eq" && !eqWarningDismissed) {
-      setEqWarningOpen(true);
-    }
-  }, [activeTab, eqWarningDismissed]);
+    const shouldShowEqWarning =
+      activeTab === "eq" && accessibilityEnabled && !eqWarningDismissed;
+
+    setEqWarningOpen(shouldShowEqWarning);
+  }, [accessibilityEnabled, activeTab, eqWarningDismissed]);
 
   useEffect(() => {
     if (!eqWarningOpen) return;
@@ -392,7 +393,7 @@ export default function App() {
           >
             <div className="mb-2 flex items-start justify-between gap-4 border-b border-primary/30 pb-2">
               <span id="eq-warning-title" className="text-sm tracking-widest">
-                EQ VISUAL WARNING
+                EQ A11Y MODE ACTIVE
               </span>
               <button
                 ref={eqWarningDismissRef}
@@ -405,8 +406,8 @@ export default function App() {
               </button>
             </div>
             <p id="eq-warning-copy" className="text-sm leading-relaxed">
-              Be cautious: this EQ uses flashy visual elements. If you have sensory
-              sensitivity or prefer reduced stimulation, you might want to keep A11Y-Mode on.
+              A11Y mode is active, so the EQ visualizers stay disabled here. Switch A11Y off in
+              the top navigation if you want the animated EQ view.
             </p>
             <button
               type="button"

@@ -28,6 +28,7 @@ type TerminalLine = {
   id: number;
   text: string;
   kind: TerminalLineKind;
+  helpItems?: TerminalHelpItem[];
 };
 
 type TerminalSeedLine = {
@@ -37,8 +38,14 @@ type TerminalSeedLine = {
 
 type TerminalResult = {
   output?: string[];
+  helpItems?: TerminalHelpItem[];
   clear?: boolean;
   kind?: TerminalLineKind;
+};
+
+type TerminalHelpItem = {
+  usage: string;
+  description: string;
 };
 
 type TerminalCommandContext = {
@@ -280,15 +287,32 @@ function visitorSnapshot() {
   };
 }
 
+function TerminalHelpList({ items }: { items: TerminalHelpItem[] }) {
+  return (
+    <div className="my-2 space-y-2 text-sm leading-6 sm:space-y-1">
+      {items.map((item) => (
+        <div
+          key={item.usage}
+          className="grid min-w-0 gap-0.5 border-l border-primary/20 pl-3 sm:grid-cols-[minmax(8rem,0.36fr)_minmax(0,1fr)] sm:gap-5 sm:border-l-0 sm:pl-0"
+        >
+          <div className="min-w-0 break-words text-primary">{item.usage}</div>
+          <div className="min-w-0 break-words text-muted-foreground sm:pl-0">{item.description}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
   {
     name: "help",
     usage: "help",
     description: "show available commands",
     run: () => ({
-      output: [
-        COMMAND_DEFINITIONS.map((cmd) => `${cmd.usage.padEnd(18)} ${cmd.description}`).join("\n"),
-      ],
+      helpItems: COMMAND_DEFINITIONS.map((cmd) => ({
+        usage: cmd.usage,
+        description: cmd.description,
+      })).sort((a, b) => a.usage.localeCompare(b.usage)),
     }),
   },
   {
@@ -908,6 +932,13 @@ export function TerminalOverlay({
     return next;
   };
 
+  const makeHelpLine = (helpItems: TerminalHelpItem[]): TerminalLine => ({
+    id: lineIdRef.current++,
+    text: "",
+    kind: "output",
+    helpItems,
+  });
+
   const appendLines = (next: TerminalLine[]) => {
     setLines((prev) => [...prev, ...next].slice(-MAX_HISTORY_LINES));
   };
@@ -1364,10 +1395,12 @@ export function TerminalOverlay({
 
     const output = result.output ?? [];
     const outputLines = makeLines(output, result.kind ?? "output");
+    const helpLines = result.helpItems?.length ? [makeHelpLine(result.helpItems)] : [];
 
     appendLines([
       ...makeLines([`${cwd} $ ${command}`], "input"),
       ...outputLines,
+      ...helpLines,
     ]);
   };
 
@@ -1516,14 +1549,18 @@ export function TerminalOverlay({
             onClick={() => inputRef.current?.focus()}
           >
             <div role="log" aria-live="polite" aria-relevant="additions text">
-              {lines.map((line) => (
-                <pre
-                  key={line.id}
-                  className={`whitespace-pre-wrap break-words text-sm leading-6 ${lineClass(line.kind)}`}
-                >
-                  {line.text}
-                </pre>
-              ))}
+              {lines.map((line) =>
+                line.helpItems ? (
+                  <TerminalHelpList key={line.id} items={line.helpItems} />
+                ) : (
+                  <pre
+                    key={line.id}
+                    className={`whitespace-pre-wrap break-words text-sm leading-6 ${lineClass(line.kind)}`}
+                  >
+                    {line.text}
+                  </pre>
+                )
+              )}
             </div>
 
             <form onSubmit={handleSubmit} className="mt-0 flex min-w-0 items-baseline gap-2">
