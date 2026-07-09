@@ -34,8 +34,8 @@ export function CRTScreen({ children }: CRTScreenProps) {
         </>
       )}
 
-      <div className="relative z-10 min-h-screen p-3 sm:p-4 md:p-6 xl:p-8">
-        <div className="mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-[1800px] flex-col rounded-lg border-2 border-primary/40 bg-background/80 p-4 crt-glow-panel sm:min-h-[calc(100svh-2rem)] sm:p-6 md:min-h-[calc(100svh-3rem)] lg:p-8 xl:min-h-[calc(100svh-4rem)] xl:p-10">
+      <div className="relative z-10 min-h-screen p-3 sm:p-4 md:p-5 xl:p-6">
+        <div className="mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-none flex-col rounded-lg border-2 border-primary/40 bg-background/80 p-4 crt-glow-panel sm:min-h-[calc(100svh-2rem)] sm:p-6 md:min-h-[calc(100svh-2.5rem)] lg:p-8 xl:min-h-[calc(100svh-3rem)] xl:p-9">
           {children}
         </div>
       </div>

@@ -606,7 +606,7 @@ useEffect(() => {
   }, [activeIndex, activeTrack, eqQueue?.length, error, isPlaying, loadedLabel, eqRepeat]);
 
   return (
-    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded crt-glow-soft">
+    <section className="mb-12 border border-primary/30 p-4 md:p-6 bg-card/50 rounded crt-glow-soft text-sm">
       <h2 className="text-primary mb-4 flex items-center gap-2">
         <span className="text-muted-foreground">[</span>
         <TypewriterText text="EQUALIZER.DIR" speedMs={18} showCursor={false} />
@@ -627,55 +627,48 @@ useEffect(() => {
         onChange={handleUploadChange}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[2.35fr_0.65fr] gap-4">
-        <div className="space-y-4">
-          <div className="border border-primary/20 rounded bg-background/40 p-4">
-            <div className="min-w-0 text-muted-foreground text-sm leading-relaxed">
-              <span className="text-primary">{">"}</span>{" "}
-              Upload local audio files, then press PLAY. The EQ reads directly from your browser.
+      <div className="grid grid-cols-1 lg:grid-cols-[2.35fr_0.65fr] gap-4 items-stretch">
+        <div className="min-w-0">
+          <div className="flex h-full min-h-0 flex-col border border-primary/20 rounded bg-background/40 p-4">
+            <div className="relative border border-primary/15 rounded bg-background/30 p-3 mb-2">
+              <canvas
+                ref={walkersRef}
+                role={accessibilityEnabled ? undefined : "img"}
+                aria-hidden={accessibilityEnabled}
+                aria-label={accessibilityEnabled ? undefined : "Animated audio walker visualization"}
+                className={`w-full h-56 rounded ${accessibilityEnabled ? "opacity-0" : ""}`}
+              />
+
+              {accessibilityEnabled && (
+                <div
+                  role="note"
+                  className="absolute inset-3 flex items-center justify-center rounded border border-primary/30 bg-background text-center text-sm tracking-widest text-primary"
+                >
+                  A11Y MODE: ASTRO WALKER VISUAL DISABLED
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="border border-primary/20 rounded bg-background/40 p-4">
-          <div className="relative border border-primary/15 rounded bg-background/30 p-3 mb-2">
-            <canvas
-              ref={walkersRef}
-              role={accessibilityEnabled ? undefined : "img"}
-              aria-hidden={accessibilityEnabled}
-              aria-label={accessibilityEnabled ? undefined : "Animated audio walker visualization"}
-              className={`w-full h-56 rounded ${accessibilityEnabled ? "opacity-0" : ""}`}
-            />
+            <div className="relative border border-primary/15 rounded bg-background/30 p-2">
+              <canvas
+                ref={spectrumRef}
+                role={accessibilityEnabled ? undefined : "img"}
+                aria-hidden={accessibilityEnabled}
+                aria-label={accessibilityEnabled ? undefined : "Audio spectrum visualization"}
+                className={`w-full h-64 rounded ${accessibilityEnabled ? "opacity-0" : ""}`}
+              />
 
-            {accessibilityEnabled && (
-              <div
-                role="note"
-                className="absolute inset-3 flex items-center justify-center rounded border border-primary/30 bg-background text-center text-sm tracking-widest text-primary"
-              >
-                A11Y MODE: ASTRO WALKER VISUAL DISABLED
-              </div>
-            )}
-          </div>
+              {accessibilityEnabled && (
+                <div
+                  role="note"
+                  className="absolute inset-2 flex items-center justify-center rounded border border-primary/30 bg-background text-center text-sm tracking-widest text-primary"
+                >
+                  A11Y MODE: AUDIO SPECTRUM VISUAL DISABLED
+                </div>
+              )}
+            </div>
 
-          <div className="relative border border-primary/15 rounded bg-background/30 p-2">
-            <canvas
-              ref={spectrumRef}
-              role={accessibilityEnabled ? undefined : "img"}
-              aria-hidden={accessibilityEnabled}
-              aria-label={accessibilityEnabled ? undefined : "Audio spectrum visualization"}
-              className={`w-full h-64 rounded ${accessibilityEnabled ? "opacity-0" : ""}`}
-            />
-
-            {accessibilityEnabled && (
-              <div
-                role="note"
-                className="absolute inset-2 flex items-center justify-center rounded border border-primary/30 bg-background text-center text-sm tracking-widest text-primary"
-              >
-                A11Y MODE: AUDIO SPECTRUM VISUAL DISABLED
-              </div>
-            )}
-          </div>
-
-          <div className="mt-2 text-xs text-muted-foreground tracking-widest flex items-center justify-between gap-3">
+          <div className="mt-2 text-sm text-muted-foreground tracking-widest flex items-center justify-between gap-3">
             <div className="truncate">
               -- TRACK:{" "}
               <span className="text-primary/80">{loadedLabel === "NO_TRACK" ? "(none)" : loadedLabel}</span>
@@ -689,7 +682,7 @@ useEffect(() => {
           </div>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="text-xs text-muted-foreground tracking-widest w-16">{formatTime(currentTime)}</div>
+            <div className="text-sm text-muted-foreground tracking-widest w-16">{formatTime(currentTime)}</div>
             <input
               type="range"
               aria-label="Seek audio position"
@@ -728,11 +721,11 @@ style={{
 }}
 
             />
-            <div className="text-xs text-muted-foreground tracking-widest w-16 text-right">{formatTime(duration)}</div>
+            <div className="text-sm text-muted-foreground tracking-widest w-16 text-right">{formatTime(duration)}</div>
           </div>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="text-xs text-muted-foreground tracking-widest w-16">VOLUME</div>
+            <div className="text-sm text-muted-foreground tracking-widest w-16">VOLUME</div>
             <input
               type="range"
               aria-label="Volume"
@@ -746,7 +739,7 @@ style={{
 style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
             />
-            <div className="text-xs text-primary/80 w-16 text-right tabular-nums">{Math.round(volume * 100)}%</div>
+            <div className="text-sm text-primary/80 w-16 text-right tabular-nums">{Math.round(volume * 100)}%</div>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -822,7 +815,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
         </div>
         </div>
 
-        <aside className="border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-4">
+        <aside className="border border-primary/20 rounded bg-background/40 p-4 flex h-full min-h-0 max-h-[70rem] flex-col gap-4 overflow-hidden lg:max-h-[calc(100vh-14rem)]">
           <div
             className={`grid w-full gap-2 ${
               (eqQueue?.length ?? 0) > 0 ? "sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2" : ""
@@ -862,19 +855,19 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
           <div className="border border-primary/15 rounded bg-background/30 p-3">
             <pre
               aria-live="polite"
-              className="text-sm text-muted-foreground whitespace-pre-wrap select-none leading-5"
+              className="text-base text-muted-foreground whitespace-pre-wrap select-none leading-6"
             >
               {nowPlayingText}
             </pre>
           </div>
 
-          <div className="border border-primary/15 rounded bg-background/30 p-3">
-            <div className="text-xs text-muted-foreground tracking-widest mb-2">QUEUE</div>
+          <div className="border border-primary/15 rounded bg-background/30 p-3 flex min-h-0 flex-1 flex-col">
+            <div className="text-sm text-muted-foreground tracking-widest mb-2 shrink-0">QUEUE</div>
 
             {(eqQueue?.length ?? 0) === 0 ? (
-              <div className="text-xs text-muted-foreground tracking-widest">-- EMPTY (upload audio files)</div>
+              <div className="text-sm text-muted-foreground tracking-widest">-- EMPTY (upload audio files)</div>
             ) : (
-              <div className="space-y-2 max-h-[22rem] overflow-auto pr-1">
+              <div className="min-h-0 max-h-[28rem] flex-1 space-y-2 overflow-y-auto overflow-x-hidden pr-1">
                 {(eqQueue ?? []).map((t: any) => {
                   const active = t.id === ((activeTrack as any)?.id ?? null);
                   const label = `${t.artist ? `${t.artist} — ` : ""}${t.title}`;
@@ -894,7 +887,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
                           : "border-primary/20 bg-background/40 text-muted-foreground hover:border-primary/60 hover:text-primary"
                       }`}
                     >
-                      <span className="text-xs tracking-widest">
+                      <span className="text-sm tracking-widest">
                         {active ? "> " : "-- "}
                         {label}
                       </span>

@@ -116,22 +116,29 @@ export function playMechClick() {
   lastNavTime = now;
 }
 
-export function startHoverNoise(volume = 0.9) {
-  if (hoverSource) return;
+export function startHoverNoise(volume = 0.9, playbackRate = 1.0) {
+  if (hoverSource && hoverGain) {
+    const audioCtx = getCtx();
+    hoverSource.playbackRate.setValueAtTime(playbackRate, audioCtx.currentTime);
+    hoverGain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    return;
+  }
 
   if (!buffers.NOISE) {
     void primeAudio(["NOISE"])
-      .then(() => startHoverNoise(volume))
+      .then(() => startHoverNoise(volume, playbackRate))
       .catch(() => {});
     return;
   }
 
   const audioCtx = getCtx();
+  if (audioCtx.state === "suspended") void audioCtx.resume().catch(() => {});
   const src = audioCtx.createBufferSource();
   const gain = audioCtx.createGain();
 
   src.buffer = buffers.NOISE!;
   src.loop = true;
+  src.playbackRate.value = playbackRate;
   gain.gain.value = volume;
 
   src.connect(gain).connect(audioCtx.destination);

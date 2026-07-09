@@ -3,7 +3,15 @@
 :root {
   --crt-accent: #00ff41;
   --crt-accent-rgb: 0, 255, 65;
-  --font-size: 18px;
+  --font-size: 19px;
+  --text-xs: 0.9rem;
+  --text-xs--line-height: 1.35;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.45;
+  --text-base: 1.08rem;
+  --text-base--line-height: 1.55;
+  --text-lg: 1.22rem;
+  --text-lg--line-height: 1.45;
   --background: #0a0e0a;
   --foreground: var(--crt-accent);
   --card: #0f150f;
@@ -109,7 +117,7 @@
 }
 
 :root[data-accessibility="on"] {
-  --font-size: 19px;
+  --font-size: 20px;
   --background: #000000;
   --foreground: #ffffff;
   --card: #050505;

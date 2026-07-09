@@ -272,15 +272,15 @@ export function AstronautLogoLab() {
         <span>Astrolab</span>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px] gap-4 items-start">
-        <div className="border border-primary/20 rounded bg-background/40 p-3 md:p-4">
-          <div className="relative border border-primary/15 rounded bg-black/95 p-2 overflow-hidden">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(34rem,42rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(40rem,46rem)] gap-4 items-stretch">
+        <div className="flex h-full min-h-0 flex-col border border-primary/20 rounded bg-background/40 p-3 md:p-4">
+          <div className="relative flex min-h-[360px] flex-1 border border-primary/15 rounded bg-black/95 p-2 overflow-hidden md:min-h-[420px]">
             <canvas
               ref={canvasRef}
               role={accessibilityEnabled ? undefined : "img"}
               aria-hidden={accessibilityEnabled}
               aria-label={accessibilityEnabled ? undefined : "Astronaut logo preview canvas"}
-              className={`w-full h-[360px] md:h-[420px] rounded ${
+              className={`w-full h-[360px] md:h-[420px] xl:h-full rounded ${
                 accessibilityEnabled ? "opacity-0" : ""
               }`}
             />
@@ -371,7 +371,7 @@ export function AstronautLogoLab() {
           </div>
         </div>
 
-        <aside className="border border-primary/20 rounded bg-background/40 p-3 md:p-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-5.5rem)] overflow-auto">
+        <aside className="h-full min-h-0 overflow-auto border border-primary/20 rounded bg-background/40 p-3 md:p-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-5.5rem)]">
           <Section title="PRESET">
             <div className="grid grid-cols-3 gap-2">
               {(["front", "threeQuarter", "side"] as PosePreset[]).map((id) => {

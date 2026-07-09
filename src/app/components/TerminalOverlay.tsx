@@ -356,7 +356,7 @@ const COMMAND_DEFINITIONS: TerminalCommandDefinition[] = [
             "---------------------",
             "role: guest / read-only visitor",
             "account: none",
-            "tracking profile: none",
+            "session: local browser display",
             `language: ${visitor.language}`,
             `platform: ${visitor.platform}`,
             `viewport: ${visitor.viewport}`,

@@ -11,6 +11,7 @@ type CodeSnippet = {
   title?: string;
   language: string;
   code: string;
+  why?: string;
 };
 
 type RepoLink = {
@@ -41,6 +42,8 @@ type CodingItem = {
   sections: CodingSection[];
 };
 
+const publicAsset = (name: string) => `${import.meta.env.BASE_URL}${name}`;
+
 function CodeSnippetBlock({ snippet }: { snippet: CodeSnippet }) {
   return (
     <div className="overflow-hidden rounded border border-primary/25 bg-black/20 crt-inset-sunken">
@@ -54,7 +57,50 @@ function CodeSnippetBlock({ snippet }: { snippet: CodeSnippet }) {
       <pre className="overflow-x-auto p-3 sm:p-4 text-sm leading-6 text-primary/90">
         <code>{snippet.code.trim()}</code>
       </pre>
+
+      {snippet.why && (
+        <div className="border-t border-primary/15 px-3 py-2 text-sm leading-6 text-muted-foreground">
+          <span className="text-primary">{"-- WHY THIS:"}</span> {snippet.why}
+        </div>
+      )}
     </div>
+  );
+}
+
+function MediaPreview({
+  title,
+  src,
+  alt,
+  caption,
+}: {
+  title: string;
+  src: string;
+  alt: string;
+  caption: string;
+}) {
+  return (
+    <figure className="overflow-hidden rounded border border-primary/25 bg-black/20 crt-inset-sunken">
+      <div className="flex items-center justify-between gap-3 border-b border-primary/20 bg-primary/5 px-3 py-2">
+        <span className="text-xs tracking-widest text-primary">{title}</span>
+        <span className="shrink-0 rounded border border-primary/25 bg-background/60 px-2 py-1 text-xs tracking-widest text-muted-foreground">
+          PNG
+        </span>
+      </div>
+
+      <div className="bg-black/45 p-2 sm:p-3">
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="mx-auto max-h-[26rem] w-full rounded border border-primary/15 bg-black/80 object-contain"
+        />
+      </div>
+
+      <figcaption className="border-t border-primary/15 px-3 py-2 text-sm leading-6 text-muted-foreground">
+        <span className="text-primary">{"--"}</span> {caption}
+      </figcaption>
+    </figure>
   );
 }
 
@@ -144,16 +190,36 @@ const ITEMS: CodingItem[] = [
         ],
       },
       {
+        id: "combat-preview",
+        title: "4. Combat system + attacks",
+        render: () => (
+          <MediaPreview
+            title="COMBAT_SYSTEM.PNG"
+            src={publicAsset("combat_system.png")}
+            alt="TerminalRPG combat system screenshot showing battle actions, attack selection, timed attacks and typing combo attacks."
+            caption="Example screens from the combat system: battle state, attack choices, timed input and combo typing attacks."
+          />
+        ),
+      },
+      {
         id: "snippet",
-        title: "4. Small snippet",
+        title: "5. Small snippet",
         render: () => (
           <SnippetStack
             snippets={[
               {
-                title: "COMBAT_DAMAGE",
+                title: "ATTACK_RESOLUTION",
                 language: "Python",
-                code: `damage = (attack["base_damage"] + self.hero.attack) * multiplier
-self.hero.stamina -= attack["stamina_cost"]`,
+                code: `attack = self.attacks[choice - 1]
+multiplier = self.run_attack_minigame(attack)
+
+damage = round((attack["base_damage"] + self.hero.attack) * multiplier, 1)
+self.hero.stamina -= attack["stamina_cost"]
+enemy.hp = max(0, enemy.hp - damage)
+
+print(f"You use {attack['name']} and deal {damage} damage!")`,
+                why:
+                  "This is the bridge between player choice, mini-game performance, stamina cost and battle state. It shows that combat is not only a menu: the input challenge feeds directly into damage resolution.",
               },
             ]}
           />
@@ -161,13 +227,13 @@ self.hero.stamina -= attack["stamina_cost"]`,
       },
       {
         id: "learned",
-        title: "5. What I learned",
+        title: "6. What I learned",
         text:
           "This project taught me how quickly a small game becomes a structure problem. Stats, items, quests, movement and combat all affect each other, so naming and clear boundaries matter a lot.",
       },
       {
         id: "next",
-        title: "6. Next improvements",
+        title: "7. Next improvements",
         items: [
           "Cleaner input handling across platforms.",
           "More robust save and load behavior.",
@@ -222,20 +288,42 @@ self.hero.stamina -= attack["stamina_cost"]`,
           "Writing beginner material is a different kind of coding practice. It forces me to think about names, comments, examples and progression. The code has to work, but the thought process also has to be understandable.",
       },
       {
+        id: "notebook-preview",
+        title: "4. Notebook example",
+        render: () => (
+          <MediaPreview
+            title="ARITHMETIC_OPERATORS.PNG"
+            src={publicAsset("arithmetic_operators.png")}
+            alt="Jupyter Notebook beginner guide screenshot explaining arithmetic operators with a supermarket total cost example."
+            caption="Level 1 beginner guide example from a Jupyter notebook: arithmetic operators explained with a small everyday calculation."
+          />
+        ),
+      },
+      {
         id: "snippet",
-        title: "4. Small snippet",
+        title: "5. Small snippet",
         render: () => (
           <SnippetStack
             snippets={[
               {
-                title: "BREADTH_FIRST_SEARCH",
+                title: "PATH_SEARCH_LOOP",
                 language: "Python",
-                code: `while queue:
+                code: `queue = [[start]]
+visited = set()
+
+while queue:
     path = queue.pop(0)
     node = path[-1]
 
     if node == end:
-        return path`,
+        return path
+
+    if node not in visited:
+        visited.add(node)
+        for neighbour in graph[node]:
+            queue.append(path + [neighbour])`,
+                why:
+                  "I picked this because it is a compact algorithm that still teaches a useful mental model: keep a frontier, remember visited nodes and build the answer step by step.",
               },
             ]}
           />
@@ -243,13 +331,13 @@ self.hero.stamina -= attack["stamina_cost"]`,
       },
       {
         id: "learned",
-        title: "5. What I learned",
+        title: "6. What I learned",
         text:
           "This helped me practice breaking concepts into small steps. The point is not to hide complexity behind clever syntax, but to make each step feel understandable before moving on.",
       },
       {
         id: "next",
-        title: "6. Next improvements",
+        title: "7. Next improvements",
         items: [
           "More consistent naming across chapters.",
           "More exercises per topic.",
@@ -297,18 +385,38 @@ self.hero.stamina -= attack["stamina_cost"]`,
           "The most interesting part is the text oscillator. Instead of only choosing classic waves like sine, saw or square, the plugin can build oscillator tables from typed text. The processor stores that text, sanitizes it, rebuilds the tables and syncs them into the synth voices.",
       },
       {
+        id: "beta-ui-preview",
+        title: "4. Beta UI preview",
+        render: () => (
+          <MediaPreview
+            title="ASTRO97_VST.PNG"
+            src={publicAsset("astro97_vst.png")}
+            alt="Astro97 VST beta user interface screenshot showing preset controls, oscillators, wave term preview, envelopes, macros, filter and effects controls."
+            caption="Beta UI preview. The interface is not fully polished yet, but the core functions are visible: presets, oscillator blend, text input, macro controls, filter and effects."
+          />
+        ),
+      },
+      {
         id: "snippet",
-        title: "4. Small snippet",
+        title: "5. Small snippet",
         render: () => (
           <SnippetStack
             snippets={[
               {
-                title: "STYLE_RANDOMIZE",
+                title: "SEEDED_STYLE_RANDOMIZE",
                 language: "C++",
-                code: `setParameterValue("oscAWave", static_cast<float>(chooseWave()));
-setParameterValue("macroDark", macroDark);
-setParameterValue("chorus", chorusMix);
+                code: `juce::Random rng(seed);
+
+const auto chooseWave = [&]() {
+    return rng.nextInt({ 0, static_cast<int>(Wave::Count) });
+};
+
+setParameterValue("oscAWave", static_cast<float>(chooseWave()));
+setParameterValue("macroDark", rng.nextFloat());
+setParameterValue("chorus", 0.15f + rng.nextFloat() * 0.45f);
 setOscText(true, chooseStyleText(rng, styleTexts));`,
+                why:
+                  "This shows the plugin idea better than a plain setter: one seed can produce repeatable sound/UI states, while still touching oscillator choice, macros, effects and the text oscillator.",
               },
             ]}
           />
@@ -316,13 +424,13 @@ setOscText(true, chooseStyleText(rng, styleTexts));`,
       },
       {
         id: "learned",
-        title: "5. What I learned",
+        title: "6. What I learned",
         text:
           "This project is about structure under real-time constraints. The interface can be playful, but the audio engine needs clean state, smooth parameter changes and predictable processing.",
       },
       {
         id: "next",
-        title: "6. Next improvements",
+        title: "7. Next improvements",
         items: [
           "Smoother parameter transitions.",
           "Better preset organization.",
@@ -415,14 +523,20 @@ analyser.smoothingTimeConstant = ANALYSER_SMOOTH;
 source.connect(gain);
 gain.connect(analyser);
 analyser.connect(ctx.destination);`,
+                why:
+                  "This is the audio entry point for the visual system. It keeps playback and analysis in the same browser graph, so the EQ can hear the uploaded track without sending the file anywhere.",
               },
               {
                 title: "EQ_RENDER_LOOP",
                 language: "TypeScript / Canvas",
-                code: `drawSpectrum(g, spectrumEl.width, spectrumEl.height, analyser, tickList, deps);
+                code: `const dt = Math.min(0.05, (now - lastNowRef.current) / 1000);
+
+drawSpectrum(g, spectrumEl.width, spectrumEl.height, analyser, tickList, deps);
 drawWalkers(g, walkersEl.width, walkersEl.height, analyser, dt, now, deps);
 
 rafRef.current = requestAnimationFrame(step);`,
+                why:
+                  "I chose this because it shows the site behaving like a tiny real-time engine: clamp delta time, draw spectrum, drive the astronaut and schedule the next frame.",
               },
               {
                 title: "ASTRO_LAB_EXPORT",
@@ -434,6 +548,8 @@ exportPNG(
   exportSize,
   transparentBG
 );`,
+                why:
+                  "This connects the interactive lab to an actual asset workflow. The same drawing function renders the live preview and the exported PNG, which keeps the output consistent.",
               },
               {
                 title: "MUSIC_FILTER_EXAMPLE",
@@ -445,6 +561,8 @@ exportPNG(
     activeTags.every((tag) => item.tags?.includes(tag))
   );
 }, [activeTags]);`,
+                why:
+                  "It is a small example of UI state staying predictable: tags define the filter, derived data is memoized and the render stays simple.",
               },
             ]}
           />

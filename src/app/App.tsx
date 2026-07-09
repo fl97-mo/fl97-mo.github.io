@@ -16,7 +16,7 @@ import { PrivacyPage } from "./components/PrivacyPage";
 import { TerminalOverlay } from "./components/TerminalOverlay";
 import { ColorPickerDialog } from "./components/ColorPickerDialog";
 
-import { primeAudio, startStatic, stopStatic, playSound } from "./utils/sfx";
+import { primeAudio, startHoverNoise, startStatic, stopHoverNoise, playSound } from "./utils/sfx";
 import { TypewriterCursorProvider } from "./components/Typewriter";
 import { useUI } from "./store/ui";
 import { useFocusTrap } from "./utils/useFocusTrap";
@@ -116,6 +116,56 @@ export default function App() {
     if (soundEnabled && !accessibilityEnabled) startStatic();
     else stopStatic();
   }, [accessibilityEnabled, soundEnabled]);
+
+  useEffect(() => {
+    let activeLink: HTMLAnchorElement | null = null;
+
+    const findLink = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) return null;
+      return target.closest<HTMLAnchorElement>("a[href]");
+    };
+
+    const startLinkNoise = (link: HTMLAnchorElement | null) => {
+      if (!soundEnabled || !link || activeLink === link) return;
+      activeLink = link;
+      startHoverNoise(0.58, 2.15);
+      void primeAudio(["NOISE"])
+        .then(() => {
+          if (activeLink === link && soundEnabled) startHoverNoise(0.58, 2.15);
+        })
+        .catch(() => {
+          if (activeLink === link) activeLink = null;
+        });
+    };
+
+    const stopLinkNoise = (link: HTMLAnchorElement | null, nextTarget?: EventTarget | null) => {
+      if (!link || activeLink !== link) return;
+      if (nextTarget instanceof Node && link.contains(nextTarget)) return;
+
+      activeLink = null;
+      stopHoverNoise();
+    };
+
+    const onPointerOver = (event: PointerEvent) => startLinkNoise(findLink(event.target));
+    const onPointerOut = (event: PointerEvent) =>
+      stopLinkNoise(findLink(event.target), event.relatedTarget);
+    const onFocusIn = (event: FocusEvent) => startLinkNoise(findLink(event.target));
+    const onFocusOut = (event: FocusEvent) =>
+      stopLinkNoise(findLink(event.target), event.relatedTarget);
+
+    document.addEventListener("pointerover", onPointerOver);
+    document.addEventListener("pointerout", onPointerOut);
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+
+    return () => {
+      document.removeEventListener("pointerover", onPointerOver);
+      document.removeEventListener("pointerout", onPointerOut);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+      stopHoverNoise();
+    };
+  }, [soundEnabled]);
 
   useEffect(() => {
     if ((!effectsEnabled || accessibilityEnabled) && !introDone) markIntroDone();
