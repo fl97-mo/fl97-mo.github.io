@@ -157,21 +157,13 @@ export function HomeModuleLoader({
     };
   }, [animated, isComplete]);
 
-  const openInlineTerminal = (abortLoading = false) => {
-    if (!abortLoading && !canOpenInlineTerminal) return;
+  const openInlineTerminal = () => {
+    if (!canOpenInlineTerminal) return;
     stopHoverNoise();
     if (inlineBodyRevealTimerRef.current !== null) window.clearTimeout(inlineBodyRevealTimerRef.current);
     if (inlineCollapseTimerRef.current !== null) window.clearTimeout(inlineCollapseTimerRef.current);
     if (inlineCloseTimerRef.current !== null) window.clearTimeout(inlineCloseTimerRef.current);
     if (inlineOpenRafRef.current !== null) window.cancelAnimationFrame(inlineOpenRafRef.current);
-
-    if (abortLoading) {
-      didFinishBootRef.current = true;
-      completionAnimationHandledRef.current = true;
-      setBootStep(BOOT_READY_STEP);
-      setCollapseState("collapsed");
-      onAbortBoot();
-    }
 
     setInlineTerminalHasOpened(true);
     setInlineTerminalMounted(true);
@@ -187,6 +179,25 @@ export function HomeModuleLoader({
       setInlineTerminalBodyVisible(true);
       inlineBodyRevealTimerRef.current = null;
     }, INLINE_TERMINAL_BODY_REVEAL_MS);
+  };
+
+  const skipLoadingAnimation = () => {
+    if (isComplete) return;
+    stopHoverNoise();
+    if (inlineBodyRevealTimerRef.current !== null) window.clearTimeout(inlineBodyRevealTimerRef.current);
+    if (inlineCollapseTimerRef.current !== null) window.clearTimeout(inlineCollapseTimerRef.current);
+    if (inlineCloseTimerRef.current !== null) window.clearTimeout(inlineCloseTimerRef.current);
+    if (inlineOpenRafRef.current !== null) window.cancelAnimationFrame(inlineOpenRafRef.current);
+
+    didFinishBootRef.current = true;
+    completionAnimationHandledRef.current = true;
+    setBootStep(BOOT_READY_STEP);
+    setCollapseState("collapsed");
+    setInlineTerminalMounted(false);
+    setInlineTerminalExpanded(false);
+    setInlineTerminalBodyVisible(false);
+    setInlineTerminalHasOpened(false);
+    onAbortBoot();
   };
 
   const closeInlineTerminal = () => {
@@ -379,16 +390,16 @@ export function HomeModuleLoader({
       {!isComplete && !inlineTerminalMounted && (
         <button
           type="button"
-          onClick={() => openInlineTerminal(true)}
+          onClick={skipLoadingAnimation}
           className="absolute inset-0 z-10 cursor-pointer bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-          aria-label="Abort loading animation and open terminal"
+          aria-label="Skip loading animation"
         />
       )}
 
       {isComplete && !inlineTerminalMounted && (
         <button
           type="button"
-          onClick={() => openInlineTerminal()}
+          onClick={openInlineTerminal}
           disabled={!canOpenInlineTerminal}
           onMouseEnter={startReadyHoverNoise}
           onMouseLeave={stopHoverNoise}

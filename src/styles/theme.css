@@ -64,6 +64,10 @@
   --crt-toggle-track: #050805;
   --crt-toggle-track-border: #2a3d2a;
   --crt-toggle-off: #0e1a0e;
+  --crt-scrollbar-track: rgba(0, 0, 0, 0.72);
+  --crt-scrollbar-track-border: rgba(var(--crt-rgb), 0.34);
+  --crt-scrollbar-thumb: rgba(var(--crt-rgb), 0.62);
+  --crt-scrollbar-thumb-hover: rgba(var(--crt-rgb), 0.9);
   --crt-black: #000000;
 }
 
@@ -196,6 +200,80 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  * {
+    scrollbar-color: var(--crt-scrollbar-thumb) var(--crt-scrollbar-track);
+    scrollbar-width: thin;
+  }
+
+  *::-webkit-scrollbar {
+    width: 0.72rem;
+    height: 0.72rem;
+  }
+
+  *::-webkit-scrollbar-track {
+    border: 1px solid var(--crt-scrollbar-track-border);
+    border-radius: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent 5px,
+        rgba(var(--crt-rgb), 0.12) 5px,
+        rgba(var(--crt-rgb), 0.12) 6px
+      ),
+      linear-gradient(90deg, transparent 0 2px, rgba(var(--crt-rgb), 0.1) 2px 3px, transparent 3px),
+      var(--crt-scrollbar-track);
+    box-shadow:
+      inset 1px 0 0 rgba(0, 0, 0, 0.75),
+      inset -1px 0 0 rgba(var(--crt-rgb), 0.16);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    border: 1px solid rgba(var(--crt-rgb), 0.82);
+    border-radius: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(var(--crt-rgb), 0.18) 0,
+        rgba(var(--crt-rgb), 0.18) 2px,
+        transparent 2px,
+        transparent 5px
+      ),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.68), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.68)),
+      var(--crt-scrollbar-thumb);
+    box-shadow:
+      inset -2px -2px 0 rgba(0, 0, 0, 0.66),
+      inset 2px 2px 0 rgba(var(--crt-rgb), 0.28);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    border-color: var(--crt-scrollbar-thumb-hover);
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(var(--crt-rgb), 0.24) 0,
+        rgba(var(--crt-rgb), 0.24) 2px,
+        transparent 2px,
+        transparent 5px
+      ),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.62), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.62)),
+      var(--crt-scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-button {
+    width: 0.72rem;
+    height: 0.72rem;
+    border: 1px solid var(--crt-scrollbar-track-border);
+    border-radius: 0;
+    background:
+      linear-gradient(135deg, transparent 0 42%, rgba(var(--crt-rgb), 0.72) 42% 58%, transparent 58%),
+      var(--crt-scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: var(--background);
   }
 
   /**

@@ -53,6 +53,7 @@ export function EqualizerPage() {
   const waveAlphaRef = useRef(0);
   const waveSpeedRef = useRef(0.75);
   const wavePhaseRef = useRef(0);
+  const starScrollRef = useRef(0);
 
   const lookYawRef = useRef(0);
   const lookPitchRef = useRef(0);
@@ -116,7 +117,6 @@ export function EqualizerPage() {
 
   const {
     accessibilityEnabled,
-    effectsEnabled,
     crtColor,
     eqQueue,
     eqActiveId,
@@ -451,7 +451,7 @@ useEffect(() => {
   }, [eqQueue, eqRepeat, activeIndex]);
 
   useEqLoop({
-    visualResetKey: `${accessibilityEnabled ? "a11y" : "crt"}:${effectsEnabled ? "fx" : "no-fx"}:${crtColor}`,
+    visualResetKey: `${accessibilityEnabled ? "a11y" : "crt"}:${crtColor}`,
     visualDisabled: accessibilityEnabled,
     tickList: TICK_LIST,
     visEdges: VIS_EDGES,
@@ -495,6 +495,7 @@ useEffect(() => {
     waveAlphaRef,
     waveSpeedRef,
     wavePhaseRef,
+    starScrollRef,
 
     lookYawRef,
     lookPitchRef,
@@ -626,47 +627,16 @@ useEffect(() => {
         onChange={handleUploadChange}
       />
 
-      <div className="mb-4 border border-primary/20 rounded bg-background/40 p-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_13rem] md:items-center">
-        <div className="min-w-0 text-muted-foreground text-sm leading-relaxed">
-          <span className="text-primary">{">"}</span>{" "}
-          Upload local audio files, then press PLAY. The EQ reads directly from your browser.
-        </div>
-
-        <div className="grid w-full gap-2 md:justify-self-end">
-          <button
-            type="button"
-            onClick={() => uploadInputRef.current?.click()}
-            aria-label="Upload local audio files"
-            className="inline-flex h-10 w-full items-center justify-center gap-2 px-3 text-sm border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
-            style={{
-              boxShadow:
-                "inset -2px -2px 0px var(--crt-inset-button), inset 2px 2px 0px rgba(0,0,0,0.55)",
-            }}
-          >
-            <Upload className="w-4 h-4" />
-            <span>UPLOAD AUDIO</span>
-          </button>
-
-          {(eqQueue?.length ?? 0) > 0 && (
-            <button
-              type="button"
-              onClick={clearQueue}
-              aria-label="Clear equalizer queue"
-              className="inline-flex h-10 w-full items-center justify-center gap-2 px-3 text-sm border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all"
-              style={{
-                boxShadow:
-                  "inset -2px -2px 0px var(--crt-focus-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>CLEAR QUEUE</span>
-            </button>
-          )}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-[2.35fr_0.65fr] gap-4">
-        <div className="border border-primary/20 rounded bg-background/40 p-4">
+        <div className="space-y-4">
+          <div className="border border-primary/20 rounded bg-background/40 p-4">
+            <div className="min-w-0 text-muted-foreground text-sm leading-relaxed">
+              <span className="text-primary">{">"}</span>{" "}
+              Upload local audio files, then press PLAY. The EQ reads directly from your browser.
+            </div>
+          </div>
+
+          <div className="border border-primary/20 rounded bg-background/40 p-4">
           <div className="relative border border-primary/15 rounded bg-background/30 p-3 mb-2">
             <canvas
               ref={walkersRef}
@@ -850,8 +820,45 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
 
           <audio ref={audioRef} preload="auto" aria-hidden="true" />
         </div>
+        </div>
 
         <aside className="border border-primary/20 rounded bg-background/40 p-4 flex flex-col gap-4">
+          <div
+            className={`grid w-full gap-2 ${
+              (eqQueue?.length ?? 0) > 0 ? "sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2" : ""
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => uploadInputRef.current?.click()}
+              aria-label="Upload local audio files"
+              className="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 px-2 text-sm border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
+              style={{
+                boxShadow:
+                  "inset -2px -2px 0px var(--crt-inset-button), inset 2px 2px 0px rgba(0,0,0,0.55)",
+              }}
+            >
+              <Upload className="w-4 h-4" />
+              <span className="whitespace-nowrap">UPLOAD AUDIO</span>
+            </button>
+
+            {(eqQueue?.length ?? 0) > 0 && (
+              <button
+                type="button"
+                onClick={clearQueue}
+                aria-label="Clear equalizer queue"
+                className="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 px-2 text-sm border-2 border-primary/30 rounded bg-background/40 text-primary/80 hover:text-primary hover:border-primary/60 transition-all"
+                style={{
+                  boxShadow:
+                    "inset -2px -2px 0px var(--crt-focus-soft), inset 2px 2px 0px rgba(0,0,0,0.6)",
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="whitespace-nowrap">CLEAR QUEUE</span>
+              </button>
+            )}
+          </div>
+
           <div className="border border-primary/15 rounded bg-background/30 p-3">
             <pre
               aria-live="polite"
@@ -865,7 +872,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
             <div className="text-xs text-muted-foreground tracking-widest mb-2">QUEUE</div>
 
             {(eqQueue?.length ?? 0) === 0 ? (
-              <div className="text-xs text-muted-foreground tracking-widest">-- EMPTY (upload audio files above)</div>
+              <div className="text-xs text-muted-foreground tracking-widest">-- EMPTY (upload audio files)</div>
             ) : (
               <div className="space-y-2 max-h-[22rem] overflow-auto pr-1">
                 {(eqQueue ?? []).map((t: any) => {

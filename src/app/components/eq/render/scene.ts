@@ -14,6 +14,8 @@ import {
   SCENE_SILENCE_SPAN,
   SCENE_VIS_ATTACK,
   SCENE_VIS_RELEASE,
+  STAR_PARALLAX_BASE_SPEED_PX,
+  STAR_PARALLAX_MOTION_GAIN_PX,
   WALK_BASE_SPEED,
   WALK_IDLE_SPEED,
   WALK_MOTION_ATTACK,
@@ -63,6 +65,7 @@ export type DrawWalkersDeps = {
   waveAlphaRef: Ref<number>;
   waveSpeedRef: Ref<number>;
   wavePhaseRef: Ref<number>;
+  starScrollRef: Ref<number>;
 
   timeRef: Ref<number>;
   durationRef: Ref<number>;
@@ -97,6 +100,10 @@ export function drawWalkers(
   const crt = getCrtPalette();
   const dpr = window.devicePixelRatio || 1;
   const tNow = nowMs * 0.001;
+  const wrapX = (x: number, pad = 0) => {
+    const span = Math.max(1, w + pad * 2);
+    return ((((x + pad) % span) + span) % span) - pad;
+  };
 
   g.globalAlpha = 1;
   g.globalCompositeOperation = "source-over";
@@ -139,7 +146,7 @@ export function drawWalkers(
 
       if (aa <= 0.001) continue;
       g.fillStyle = crt.rgba(aa);
-      g.fillRect(p.x, p.y, p.s, p.s);
+      g.fillRect(wrapX(p.x - deps.starScrollRef.current * 0.18, 4 * dpr), p.y, p.s, p.s);
     }
     g.restore();
   }
@@ -224,7 +231,24 @@ export function drawWalkers(
   const kVis = targetVis > prevVis ? SCENE_VIS_ATTACK : SCENE_VIS_RELEASE;
   const sceneVis = (deps.sceneVisRef.current = prevVis + (targetVis - prevVis) * kVis);
 
-  drawStars(g, stars, dt, nowMs, an, freq, bass, mids, air, kick, beat, beatImpulse, sceneVis, beatCount, deps);
+  drawStars(
+    g,
+    stars,
+    dt,
+    nowMs,
+    an,
+    freq,
+    bass,
+    mids,
+    air,
+    kick,
+    beat,
+    beatImpulse,
+    sceneVis,
+    beatCount,
+    deps.starScrollRef.current,
+    deps
+  );
 
   g.strokeStyle = crt.rgba(0.14 + bass * 0.22 + kick * 0.12);
   g.lineWidth = Math.max(1, Math.floor(1 * dpr));
@@ -311,6 +335,15 @@ export function drawWalkers(
   const speedTarget = WALK_BASE_SPEED + mids * WALK_SPEED_GAIN + kick * 1.2;
   deps.phaseRef.current += dt * lerp(WALK_IDLE_SPEED, speedTarget, motion);
   const phase = deps.phaseRef.current;
+
+  if (playing || motion > 0.01) {
+    const parallaxSpeed =
+      (STAR_PARALLAX_BASE_SPEED_PX + STAR_PARALLAX_MOTION_GAIN_PX * motion + kick * 1.6) * dpr;
+    deps.starScrollRef.current += dt * parallaxSpeed * dir;
+    if (Math.abs(deps.starScrollRef.current) > w * 100) {
+      deps.starScrollRef.current = deps.starScrollRef.current % Math.max(1, w);
+    }
+  }
 
   // =========================
   // SEEK SPRING (KEEP!)

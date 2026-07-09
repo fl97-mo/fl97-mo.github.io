@@ -21,6 +21,8 @@ import {
   STAR_RING_R_MIN,
   STAR_RING_THICK_MAX,
   STAR_RING_THICK_MIN,
+  STAR_PARALLAX_DEPTH_MAX,
+  STAR_PARALLAX_DEPTH_MIN,
   STAR_COUNT_MAX,
   STAR_COUNT_MIN,
   VIS_COLUMNS,
@@ -99,6 +101,7 @@ export function drawStars(
   beatImpulse: number,
   sceneVis: number,
   beatCount: number,
+  scrollX: number,
   deps: {
     connectedRef: Ref<boolean>;
     ctxRef: Ref<AudioContext | null>;
@@ -107,8 +110,14 @@ export function drawStars(
 ) {
   const crt = getCrtPalette();
   const dpr = window.devicePixelRatio || 1;
+  const w = g.canvas.width || 1;
+  const wrapPad = 96 * dpr;
   const sb = deps.starBandsSmoothRef.current;
   const hasAudio = !!(an && deps.connectedRef.current && freq);
+  const wrapX = (x: number) => {
+    const span = Math.max(1, w + wrapPad * 2);
+    return ((((x + wrapPad) % span) + span) % span) - wrapPad;
+  };
 
   const ensureBins = (stars2: Star[], an2: AnalyserNode) => {
     const ctx = deps.ctxRef.current;
@@ -189,7 +198,9 @@ export function drawStars(
 
     const breath = 0.97 + 0.03 * Math.sin(t * STAR_BREATH_SPEED + s.seed * 0.25);
 
-    const cx = s.baseX;
+    const depthNoise = 0.5 + 0.5 * Math.sin(s.seed * 12.9898);
+    const depth = lerp(STAR_PARALLAX_DEPTH_MIN, STAR_PARALLAX_DEPTH_MAX, depthNoise);
+    const cx = wrapX(s.baseX - scrollX * depth);
     const cy = s.baseY;
 
     const rCore = s.baseR * dpr;

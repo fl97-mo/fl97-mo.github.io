@@ -95,6 +95,11 @@ export const STAR_PULSE_COOLDOWN = 0.12;
 
 export const STAR_BEAT_GATE = 0.26;
 
+export const STAR_PARALLAX_BASE_SPEED_PX = 1.4;
+export const STAR_PARALLAX_MOTION_GAIN_PX = 4.0;
+export const STAR_PARALLAX_DEPTH_MIN = 0.22;
+export const STAR_PARALLAX_DEPTH_MAX = 0.42;
+
 export const SCENE_VIS_ATTACK = 0.1;
 export const SCENE_VIS_RELEASE = 0.035;
 

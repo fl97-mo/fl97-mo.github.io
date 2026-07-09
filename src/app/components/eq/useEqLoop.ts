@@ -51,6 +51,7 @@ export type UseEqLoopArgs = {
   waveAlphaRef: Ref<number>;
   waveSpeedRef: Ref<number>;
   wavePhaseRef: Ref<number>;
+  starScrollRef: Ref<number>;
 
   lookYawRef: Ref<number>;
   lookPitchRef: Ref<number>;
@@ -100,6 +101,7 @@ export function useEqLoop(args: UseEqLoopArgs) {
     args.waveAlphaRef.current = 0;
     args.waveSpeedRef.current = 0.75;
     args.wavePhaseRef.current = 0;
+    args.starScrollRef.current = 0;
     args.lookYawRef.current = 0;
     args.lookPitchRef.current = 0;
     args.lookActiveRef.current = 0;
@@ -268,6 +270,7 @@ export function useEqLoop(args: UseEqLoopArgs) {
             waveAlphaRef: args.waveAlphaRef,
             waveSpeedRef: args.waveSpeedRef,
             wavePhaseRef: args.wavePhaseRef,
+            starScrollRef: args.starScrollRef,
 
             timeRef: args.timeRef,
             durationRef: args.durationRef,
