@@ -254,6 +254,10 @@ export function UIProvider({ children }: { children: ReactNode }) {
     writeBoolToSessionStorage(SS_ACCESSIBILITY_MANUAL, true);
 
     if (v) {
+      setIntroDone(true);
+      setHomeRevealDone(true);
+      writeBoolToSessionStorage(SS_INTRO_DONE, true);
+      writeBoolToSessionStorage(SS_HOME_REVEAL_DONE, true);
       stopStatic();
       stopTypingLoop();
       stopHoverNoise();

@@ -176,17 +176,7 @@ export function TypewriterText({
 
       intervalRef.current = window.setInterval(() => {
         setI((prev) => {
-          const next = prev + 1;
-
-          if (next >= text.length) {
-            clearAllTimers();
-            setDone(true);
-            finishTyping(id, showCursor);
-            fireDoneOnce();
-            return text.length;
-          }
-
-          return next;
+          return Math.min(prev + 1, text.length);
         });
       }, speedMs);
     }, startDelayMs);
@@ -206,6 +196,15 @@ export function TypewriterText({
     finishTyping,
     stopInstance,
   ]);
+
+  useEffect(() => {
+    if (done || i < text.length) return;
+
+    clearAllTimers();
+    setDone(true);
+    finishTyping(id, showCursor);
+    fireDoneOnce();
+  }, [done, finishTyping, i, id, showCursor, text.length]);
 
   const cursorVisible = showCursor && (isTypingNow || (!anyTyping && done && lastFinishedId === id));
   const Tag = as;

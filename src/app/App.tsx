@@ -16,7 +16,14 @@ import { PrivacyPage } from "./components/PrivacyPage";
 import { TerminalOverlay } from "./components/TerminalOverlay";
 import { ColorPickerDialog } from "./components/ColorPickerDialog";
 
-import { primeAudio, startHoverNoise, startStatic, stopHoverNoise, playSound } from "./utils/sfx";
+import {
+  primeAudio,
+  startHoverNoise,
+  startStatic,
+  stopHoverNoise,
+  stopStatic,
+  playSound,
+} from "./utils/sfx";
 import { TypewriterCursorProvider } from "./components/Typewriter";
 import { useUI } from "./store/ui";
 import { useFocusTrap } from "./utils/useFocusTrap";
@@ -79,9 +86,11 @@ export default function App() {
     soundEnabled,
   } = useUI();
 
-  const chromeHasRevealedRef = useRef(homeRevealDone);
-  const [navigationVisible, setNavigationVisible] = useState(homeRevealDone);
-  const [footerVisible, setFooterVisible] = useState(homeRevealDone);
+  const introComplete = introDone || accessibilityEnabled || !effectsEnabled;
+  const homeRevealComplete = homeRevealDone || accessibilityEnabled || !effectsEnabled;
+  const chromeHasRevealedRef = useRef(homeRevealComplete);
+  const [navigationVisible, setNavigationVisible] = useState(homeRevealComplete);
+  const [footerVisible, setFooterVisible] = useState(homeRevealComplete);
 
   const dismissEqWarning = useCallback(() => {
     setEqWarningOpen(false);
@@ -168,8 +177,17 @@ export default function App() {
   }, [soundEnabled]);
 
   useEffect(() => {
-    if ((!effectsEnabled || accessibilityEnabled) && !introDone) markIntroDone();
-  }, [accessibilityEnabled, effectsEnabled, introDone, markIntroDone]);
+    if (effectsEnabled && !accessibilityEnabled) return;
+    if (!introDone) markIntroDone();
+    if (!homeRevealDone) markHomeRevealDone();
+  }, [
+    accessibilityEnabled,
+    effectsEnabled,
+    homeRevealDone,
+    introDone,
+    markHomeRevealDone,
+    markIntroDone,
+  ]);
 
   useEffect(() => {
     if (!accessibilityAutoDetected) return;
@@ -189,6 +207,13 @@ export default function App() {
   });
 
   useEffect(() => {
+    if (!effectsEnabled || accessibilityEnabled) {
+      chromeHasRevealedRef.current = true;
+      setNavigationVisible(true);
+      setFooterVisible(true);
+      return;
+    }
+
     if (!homeRevealDone) {
       chromeHasRevealedRef.current = false;
       setNavigationVisible(false);
@@ -196,7 +221,7 @@ export default function App() {
       return;
     }
 
-    if (chromeHasRevealedRef.current || !effectsEnabled || accessibilityEnabled) {
+    if (chromeHasRevealedRef.current) {
       chromeHasRevealedRef.current = true;
       setNavigationVisible(true);
       setFooterVisible(true);
@@ -258,6 +283,8 @@ export default function App() {
     setFooterVisible(true);
   }, []);
   const chromeInstant = !effectsEnabled || accessibilityEnabled;
+  const showNavigation = navigationVisible || chromeInstant;
+  const showFooter = footerVisible || chromeInstant;
 
   return (
     <CRTScreen>
@@ -275,13 +302,13 @@ export default function App() {
         </a>
 
         <div
-          aria-hidden={!navigationVisible}
-          className={`home-nav-reveal-shell ${navigationVisible ? "is-visible" : ""} ${
+          aria-hidden={!showNavigation}
+          className={`home-nav-reveal-shell ${showNavigation ? "is-visible" : ""} ${
             chromeInstant ? "is-instant" : ""
           }`}
         >
           <div className="min-h-0 overflow-hidden">
-            {navigationVisible && (
+            {showNavigation && (
               <RetroNavigation
                 activeTab={activeTab}
                 onChange={navigateToTab}
@@ -306,11 +333,11 @@ export default function App() {
 
           {activeTab === "home" && (
             <>
-              <TerminalHeader introAlreadyDone={introDone} onIntroDone={markIntroDone} />
+              <TerminalHeader introAlreadyDone={introComplete} onIntroDone={markIntroDone} />
 
-              {introDone && (
+              {introComplete && (
                 <HomeContentReveal
-                  instant={homeRevealDone}
+                  instant={homeRevealComplete}
                   activeTab={activeTab}
                   onDone={markHomeRevealDone}
                   onFooterMounted={revealFooter}
@@ -342,9 +369,9 @@ export default function App() {
         </main>
 
         <footer
-          aria-hidden={!footerVisible}
+          aria-hidden={!showFooter}
           className={`mt-12 pt-6 border-t border-primary/30 text-center text-muted-foreground ${
-            footerVisible ? "home-chrome-reveal" : "invisible"
+            showFooter ? "home-chrome-reveal" : "invisible"
           }`}
         >
           <p className="flex items-center justify-center gap-2">

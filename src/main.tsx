@@ -10,6 +10,21 @@ createRoot(document.getElementById("root")!).render(
   </UIProvider>
 );
 
-requestAnimationFrame(() => {
+const revealApp = () => {
   document.documentElement.dataset.mounted = "1";
-});
+};
+
+const waitForRetroFont = async () => {
+  if (!document.fonts?.load) return;
+
+  await Promise.race([
+    document.fonts.load('20px "VT323"'),
+    new Promise((resolve) => window.setTimeout(resolve, 900)),
+  ]);
+};
+
+waitForRetroFont()
+  .catch(() => {})
+  .finally(() => {
+    requestAnimationFrame(revealApp);
+  });

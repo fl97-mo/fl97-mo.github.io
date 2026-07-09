@@ -1,12 +1,53 @@
 @font-face {
   font-family: "VT323";
-  src: url("/fonts/VT323-Regular.woff2") format("woff2");
+  src:
+    local("VT323 Regular"),
+    local("VT323-Regular"),
+    url("/fonts/VT323-Regular.woff2?v=2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
-* {
-  font-family: "VT323", monospace;
+@font-face {
+  font-family: "VT323";
+  src:
+    local("VT323 Regular"),
+    local("VT323-Regular"),
+    url("/fonts/VT323-Regular.woff2?v=2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "VT323";
+  src:
+    local("VT323 Regular"),
+    local("VT323-Regular"),
+    url("/fonts/VT323-Regular.woff2?v=2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "VT323";
+  src:
+    local("VT323 Regular"),
+    local("VT323-Regular"),
+    url("/fonts/VT323-Regular.woff2?v=2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --font-retro: "VT323", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+*,
+*::before,
+*::after {
   letter-spacing: 0;
 }
