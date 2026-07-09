@@ -412,22 +412,17 @@ export function MusicPage({ onOpenEQ }: { onOpenEQ: () => void }) {
         <span className="text-muted-foreground">]</span>
       </h2>
 
-      <p className="text-muted-foreground text-sm">
-        <span className="text-primary">{">"}</span>{" "}
-        I produce music under the alias: <span className="text-primary">NOMKEE</span>.
-      </p>
-
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p className="text-muted-foreground text-sm">
           <span className="text-primary">{">"}</span>{" "}
-          The EQ now uses your local audio files. Open EQUALIZER.DIR and upload music there.
+          I produce music under the alias: <span className="text-primary">NOMKEE</span>.
         </p>
 
         <button
           type="button"
           onClick={openEqualizer}
           aria-label="Open equalizer upload page"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all"
+          className="inline-flex items-center justify-center gap-2 self-start px-5 py-2 border-2 border-primary/50 rounded bg-background/50 text-primary hover:border-primary crt-hover-glow transition-all md:self-auto"
           style={{
             boxShadow:
               "inset -2px -2px 0px var(--crt-inset-button), inset 2px 2px 0px rgba(0,0,0,0.55)",
