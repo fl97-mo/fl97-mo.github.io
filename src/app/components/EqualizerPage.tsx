@@ -307,7 +307,7 @@ export function EqualizerPage() {
     audio.load();
 
 
-    setLoadedLabel(`${t.artist ? `${t.artist} — ` : ""}${t.title}`);
+    setLoadedLabel(`${t.artist ? `${t.artist} - ` : ""}${t.title}`);
     setSourceKind(file ? "LOCAL_FILE" : "NONE");
     setIsPlaying(false);
 
@@ -668,12 +668,14 @@ useEffect(() => {
               )}
             </div>
 
-          <div className="mt-2 text-sm text-muted-foreground tracking-widest flex items-center justify-between gap-3">
-            <div className="truncate">
+          <div className="mt-3 grid gap-1 text-sm text-muted-foreground tracking-widest sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-3">
+            <div className="min-w-0">
               -- TRACK:{" "}
-              <span className="text-primary/80">{loadedLabel === "NO_TRACK" ? "(none)" : loadedLabel}</span>
+              <span className="break-words text-primary/80 sm:break-normal">
+                {loadedLabel === "NO_TRACK" ? "(none)" : loadedLabel}
+              </span>
             </div>
-            <div className="tabular-nums">
+            <div className="tabular-nums sm:text-right">
               -- TIME:{" "}
               <span className="text-primary/80">
                 {formatTime(currentTime)} / {formatTime(duration)}
@@ -870,7 +872,7 @@ style={{ ["--fill" as any]: clamp(volume, 0, 1) * 100 }}
               <div className="min-h-0 max-h-[28rem] flex-1 space-y-2 overflow-y-auto overflow-x-hidden pr-1">
                 {(eqQueue ?? []).map((t: any) => {
                   const active = t.id === ((activeTrack as any)?.id ?? null);
-                  const label = `${t.artist ? `${t.artist} — ` : ""}${t.title}`;
+                  const label = `${t.artist ? `${t.artist} - ` : ""}${t.title}`;
                   return (
                     <button
                       type="button"

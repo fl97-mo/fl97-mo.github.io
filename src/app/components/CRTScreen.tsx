@@ -8,17 +8,19 @@ interface CRTScreenProps {
 export function CRTScreen({ children }: CRTScreenProps) {
   const { accessibilityEnabled, effectsEnabled } = useUI();
   const showCrtEffects = effectsEnabled && !accessibilityEnabled;
+  const crtOverlayBase =
+    "pointer-events-none fixed inset-x-0 -top-[20vh] -bottom-[20vh] transform-gpu";
 
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden">
+    <div className="relative min-h-screen overflow-x-hidden bg-background">
       {showCrtEffects && (
         <>
-          <div className="pointer-events-none fixed inset-0 z-50 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15)_1px,transparent_1px,transparent_2px)]" />
+          <div className={`${crtOverlayBase} z-50 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15)_1px,transparent_1px,transparent_2px)]`} />
           <div
-            className="pointer-events-none fixed inset-0 z-40"
+            className={`${crtOverlayBase} z-40`}
             style={{ boxShadow: "inset 0 0 100px var(--crt-screen-glow)" }}
           />
-          <div className="pointer-events-none fixed inset-0 z-30 bg-primary/3 animate-[flicker_1.8s_infinite]" />
+          <div className={`${crtOverlayBase} z-30 bg-primary/3 animate-[flicker_1.8s_infinite]`} />
 
           <style>{`
             @keyframes flicker {

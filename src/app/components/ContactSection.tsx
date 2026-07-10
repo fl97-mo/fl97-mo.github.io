@@ -35,7 +35,7 @@ export function ContactSection() {
   };
 
   return (
-    <section className="mb-12 border border-primary/30 p-6 bg-card/50 rounded crt-glow-soft">
+    <section className="mb-12 border border-primary/30 bg-card/50 p-4 rounded crt-glow-soft sm:p-6">
       <h2 className="text-primary mb-4 flex items-center gap-2">
         <span className="text-muted-foreground">[</span>
         <TypewriterText text="CONTACT.SYS" speedMs={18} showCursor={false} />
@@ -55,7 +55,7 @@ export function ContactSection() {
               aria-label={`Open ${contact.label} profile in a new tab: ${contact.value}`}
               onClick={handleOpen}
               className="
-                flex items-center gap-3
+                grid grid-cols-[1.25rem_auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1
                 text-muted-foreground
                 hover:text-primary
                 transition-colors
@@ -63,19 +63,21 @@ export function ContactSection() {
                 focus:outline-none focus:ring-2 focus:ring-primary/50
               "
             >
-              <Icon className="w-5 h-5 text-primary" />
-              <span className="text-primary">{">"}</span>
+              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <span className="mt-0.5 text-primary">{">"}</span>
 
-              <span className="flex-1 tracking-widest text-xs sm:text-sm">
-                {contact.label}:
-              </span>
+              <span className="grid min-w-0 gap-0.5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-baseline sm:gap-3">
+                <span className="tracking-widest text-xs text-primary sm:text-sm">
+                  {contact.label}:
+                </span>
 
-              <span className="group-hover:underline text-xs sm:text-sm">
-                {contact.value}
-              </span>
+                <span className="break-all text-xs group-hover:underline sm:truncate sm:break-normal sm:text-sm">
+                  {contact.value}
+                </span>
 
-              <span className="text-primary/60 text-xs hidden sm:inline">
-                [OPEN]
+                <span className="hidden text-xs text-primary/60 sm:inline">
+                  [OPEN]
+                </span>
               </span>
             </a>
           );
@@ -83,9 +85,9 @@ export function ContactSection() {
       </div>
 
       <div className="mt-6 pt-6 border-t border-primary/20">
-        <p className="text-muted-foreground flex items-center gap-2 text-sm">
+        <p className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 text-sm text-muted-foreground">
           <span className="text-primary">{">"}</span>
-          SYSTEM_STATUS: ONLINE | READ-ONLY MODE
+          <span>SYSTEM_STATUS: ONLINE | READ-ONLY MODE</span>
         </p>
 
       </div>
