@@ -10,7 +10,7 @@ import { SystemsPage } from "./components/SystemsPage";
 import { CodingPage } from "./components/CodingPage";
 import { MusicPage } from "./components/MusicPage";
 import { EqualizerPage } from "./components/EqualizerPage";
-import { AstronautLogoLab } from "./components/AstronautLogoLab";
+import { AstronautLogoLab } from "./components/lab/AstronautLogoLab";
 import { INFOPage } from "./components/info";
 import { PrivacyPage } from "./components/PrivacyPage";
 import { TerminalOverlay } from "./components/TerminalOverlay";

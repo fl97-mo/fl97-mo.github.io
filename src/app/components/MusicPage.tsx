@@ -14,7 +14,6 @@ type MusicItem = {
   detail: string;
   tags?: string[];
   category?: string;
-  year?: number;
 
   file?: string;
   publicFile?: string;
@@ -26,9 +25,7 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - ENTER THE UFO",
     desc: "2018 - Track - Electro House / Spacey",
     category: "Track",
-    year: 2018,
     tags: ["EDM", "Electro", "House", "Space"],
-    file: "NOMKEE_-_Enter_the_UFO.mp3",
     publicFile: "NOMKEE - Enter the UFO.mp3",
     detail:
       "> INFO\n" +
@@ -42,9 +39,7 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - I KNOW YOU BETTER",
     desc: "2020 - Track - Electro / Dark / Effects",
     category: "Track",
-    year: 2020,
     tags: ["EDM", "Electro", "Dark", "FX"],
-    file: "NOMKEE_-_I_know_you_better.wav",
     publicFile: "NOMKEE - I know you better.mp3",
     detail:
       "> INFO\n" +
@@ -58,9 +53,7 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - DONT WANT TO LOOK AWAY",
     desc: "2020 - Intro - Clocks / Deep-House / Unfinished",
     category: "Intro",
-    year: 2020,
     tags: ["Deep House", "Clocks", "Unfinished", "FX"],
-    file: "NOMKEE_-_Dont_want_to_look_away.mp3",
     publicFile: "NOMKEE - Dont want to look away.mp3",
     detail:
       "> INFO\n" +
@@ -73,9 +66,7 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - RAYGUNS EVERYWHERE",
     desc: "2022 - Action music snippet - Cyberpunk / Hard / Unfinished",
     category: "Action music snippet",
-    year: 2022,
     tags: ["Cyberpunk", "Hard", "Snippet", "Unfinished"],
-    file: "Nomkee_-_Rayguns_everywhere.wav",
     publicFile: "Nomkee - Rayguns everywhere.wav",
     detail:
       "> INFO\n" +
@@ -88,7 +79,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - BALLAD OF THE WANDERING ASTRO97 PART 1",
     desc: "2026 - Track - Melodic EDM / Space / Melancholic",
     category: "Track",
-    year: 2026,
     tags: ["EDM", "Space", "Melancholic", "Series"],
     file: "Nomkee - Ballad of the wandering Astro97 Part 1.wav",
     detail:
@@ -103,7 +93,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - BALLAD OF THE WANDERING ASTRO97 PART 2",
     desc: "2026 - Track - Space EDM / Plucks / Melancholic",
     category: "Track",
-    year: 2026,
     tags: ["EDM", "Space", "Plucks", "Melancholic", "Series"],
     file: "Nomkee - Ballad of the wandering Astro97 Part 2.wav",
     detail:
@@ -118,7 +107,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - CHERI",
     desc: "2026 - Remix - Classic EDM / Euphoric / Dance",
     category: "Remix",
-    year: 2026,
     tags: ["EDM", "Remix", "Euphoric", "Classic"],
     file: "Nomkee - Cheri.wav",
     detail:
@@ -133,7 +121,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - FROM THE HOOD",
     desc: "2026 - Track - Classic EDM / Reversed Plucks / Stereo FX",
     category: "Track",
-    year: 2026,
     tags: ["EDM", "Classic", "Plucks", "Stereo FX"],
     file: "Nomkee - From the Hood.wav",
     detail:
@@ -148,7 +135,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - HOP",
     desc: "2026 - Remix - Lo-Fi Hip Hop / 90s Rap / Melancholic",
     category: "Remix",
-    year: 2026,
     tags: ["Lo-Fi", "Hip Hop", "90s", "Melancholic", "Remix"],
     file: "Nomkee - Hop.wav",
     detail:
@@ -163,7 +149,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - MAN FROM KEPLER 22-B",
     desc: "2026 - Sketch - Retrowave / Sci-Fi / Unfinished",
     category: "Sketch",
-    year: 2026,
     tags: ["Retrowave", "Synthwave", "Space", "Unfinished"],
     file: "Nomkee - Man from Kepler 22-b.wav",
     detail:
@@ -178,7 +163,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - OCARINA OF TIME",
     desc: "2026 - Remix - Hardstyle / Game Theme / Loud",
     category: "Remix",
-    year: 2026,
     tags: ["Hardstyle", "Game Remix", "Loud", "Remix"],
     file: "Nomkee - Ocarina of Time.wav",
     detail:
@@ -193,7 +177,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - SONAR",
     desc: "2026 - Snippet - Interstellar FX / Waves / Frequencies",
     category: "Snippet",
-    year: 2026,
     tags: ["Snippet", "Space", "Sound Design", "Frequencies"],
     file: "Nomkee - Sonar.wav",
     detail:
@@ -208,7 +191,6 @@ const ITEMS: MusicItem[] = [
     name: "NOMKEE - WANDERING THROUGH SPACE",
     desc: "2026 - Track - EDM / Lo-Fi Rap Elements / Melancholic",
     category: "Track",
-    year: 2026,
     tags: ["EDM", "Lo-Fi", "Hip Hop", "90s", "Melancholic", "Space"],
     file: "Nomkee - Wandering through space.wav",
     detail:

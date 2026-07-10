@@ -22,8 +22,6 @@ export type EqTrack = {
   id: string;
   title: string;
   artist?: string;
-  year?: string;
-  downloadUrl?: string;
 };
 
 type UIState = {
@@ -70,7 +68,6 @@ const SS_CRT_COLOR = "ui.crtColor.session";
 const SS_INTRO_DONE = "ui.introDone.session";
 const SS_HOME_REVEAL_DONE = "ui.homeRevealDone.session";
 
-const SS_EQ_ACTIVE = "ui.eqActiveId.session";
 const SS_EQ_REPEAT = "ui.eqRepeat.session";
 
 function readBoolFromSessionStorage(key: string, fallback: boolean) {
@@ -118,8 +115,6 @@ function writeStrToSessionStorage(key: string, value: string | null) {
   } catch {}
 }
 
-const DEFAULT_EQ_QUEUE: EqTrack[] = [];
-
 export function UIProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(() =>
     readBoolFromSessionStorage(SS_SOUND, false)
@@ -149,12 +144,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
     return id && readBoolFromSessionStorage(SS_HOME_REVEAL_DONE, false);
   });
 
-  const [eqQueue, setEqQueueState] = useState<EqTrack[]>(DEFAULT_EQ_QUEUE);
+  const [eqQueue, setEqQueueState] = useState<EqTrack[]>([]);
 
-  const [eqActiveId, setEqActiveIdState] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return null;
-  });
+  const [eqActiveId, setEqActiveIdState] = useState<string | null>(null);
 
   const [eqRepeat, setEqRepeat] = useState<EqRepeat>(() => {
     if (typeof window === "undefined") return "OFF";
@@ -215,11 +207,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
     query.addListener(updateFromPreference);
     return () => query.removeListener(updateFromPreference);
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    writeStrToSessionStorage(SS_EQ_ACTIVE, eqActiveId);
-  }, [eqActiveId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

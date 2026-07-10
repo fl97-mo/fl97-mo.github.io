@@ -28,7 +28,7 @@ import {
   VIS_COLUMNS,
 } from "../constants";
 import { clamp, lerp } from "../math";
-import type { Star } from "../types";
+import type { Star, U8 } from "../types";
 import { getCrtPalette } from "../../../utils/crtTheme";
 
 type Ref<T> = { current: T };
@@ -92,7 +92,7 @@ export function drawStars(
   dt: number,
   nowMs: number,
   an: AnalyserNode | null,
-  freq: Uint8Array | null,
+  freq: U8 | null,
   bass: number,
   mids: number,
   air: number,

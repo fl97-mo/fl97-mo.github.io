@@ -1,10 +1,11 @@
 import { STAR_BAND_ATTACK, STAR_BAND_RELEASE } from "../constants";
 import { clamp } from "../math";
+import type { U8 } from "../types";
 
 type Ref<T> = { current: T };
 
 export function bandEnergy(
-  freq: Uint8Array,
+  freq: U8,
   sampleRate: number,
   binCount: number,
   hz0: number,
@@ -32,7 +33,7 @@ export function bandEnergy(
 }
 
 export function computeCols(
-  freq: Uint8Array,
+  freq: U8,
   ranges: Array<[number, number]>,
   centers: Float32Array | null,
   colsLevelRef: Ref<Float32Array | null>

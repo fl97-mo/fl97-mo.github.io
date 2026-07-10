@@ -2,21 +2,13 @@ import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Trash2, Upload } from "lucide-react";
 import { TypewriterText } from "./Typewriter";
-import { useUI } from "../store/ui";
+import { type EqTrack, useUI } from "../store/ui";
 
 import { MIN_HZ, MAX_HZ, VIS_COLUMNS, SEGMENTS, TICKS_HZ } from "./eq/constants";
 import { clamp, formatTime, makeMidEmphasisEdges } from "./eq/math";
 import type { BgPix, Particle, Star, U8 } from "./eq/types";
 import { ensureEqGraph } from "./eq/audioGraph";
 import { useEqLoop } from "./eq/useEqLoop";
-
-type EqTrack = {
-  id: string;
-  title: string;
-  artist?: string;
-  year?: string;
-  downloadUrl?: string;
-};
 
 const AUDIO_FILE_RE = /\.(aac|aiff?|flac|m4a|mp3|ogg|opus|wav|webm)$/i;
 
@@ -35,7 +27,6 @@ function makeLocalTrack(file: File, index: number): EqTrack {
     id: `local-${Date.now()}-${index}-${safeName}`,
     artist: "LOCAL_FILE",
     title: titleFromFileName(file.name),
-    year: file.lastModified ? String(new Date(file.lastModified).getFullYear()) : undefined,
   };
 }
 

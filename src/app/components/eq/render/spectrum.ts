@@ -22,6 +22,7 @@ import {
 } from "../constants";
 import { clamp } from "../math";
 import { computeCols, updateStarBandsSmooth } from "../audio/bands";
+import type { U8 } from "../types";
 import { getCrtPalette } from "../../../utils/crtTheme";
 
 type Ref<T> = { current: T };
@@ -37,8 +38,8 @@ export type DrawSpectrumDeps = {
   colsLevelRef: Ref<Float32Array | null>;
   starBandsSmoothRef: Ref<Float32Array | null>;
 
-  freqBufRef: Ref<Uint8Array | null>;
-  timeBufRef: Ref<Uint8Array | null>;
+  freqBufRef: Ref<U8 | null>;
+  timeBufRef: Ref<U8 | null>;
 };
 
 function formatHz(hz: number) {

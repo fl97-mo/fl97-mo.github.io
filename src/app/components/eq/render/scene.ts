@@ -23,7 +23,7 @@ import {
   WALK_SPEED_GAIN,
   WALKER_TRAIL_LEN,
 } from "../constants";
-import type { BgPix, Particle, PointerState, Star } from "../types";
+import type { BgPix, Particle, PointerState, Star, U8 } from "../types";
 import { bandEnergy, computeCols, updateStarBandsSmooth } from "../audio/bands";
 import { initStars, drawStars } from "./stars";
 import { drawWalker } from "./walkter";
@@ -40,7 +40,7 @@ export type DrawWalkersDeps = {
   ctxRef: Ref<AudioContext | null>;
   audioRef: Ref<HTMLAudioElement | null>;
   connectedRef: Ref<boolean>;
-  freqBufRef: Ref<Uint8Array | null>;
+  freqBufRef: Ref<U8 | null>;
 
   bgPixRef: Ref<{ w: number; h: number; pts: BgPix[] } | null>;
 
