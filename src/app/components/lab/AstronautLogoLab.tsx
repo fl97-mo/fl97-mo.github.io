@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TypewriterText } from "../Typewriter";
 import { useUI } from "../../store/ui";
 import { playSound, primeAudio } from "../../utils/sfx";
@@ -196,9 +196,10 @@ export function AstronautLogoLab() {
     ]
   );
 
-  useEffect(() => {
+  const drawPreview = useCallback(() => {
     const c = canvasRef.current;
     if (!c) return;
+
     const rect = c.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     const ww = Math.max(1, Math.floor(rect.width * dpr));
@@ -216,6 +217,25 @@ export function AstronautLogoLab() {
 
     drawEqAstronaut(gg, c.width, c.height, params);
   }, [accessibilityEnabled, params]);
+
+  useEffect(() => {
+    drawPreview();
+  }, [drawPreview]);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", drawPreview);
+      return () => window.removeEventListener("resize", drawPreview);
+    }
+
+    const ro = new ResizeObserver(() => drawPreview());
+    ro.observe(c);
+
+    return () => ro.disconnect();
+  }, [drawPreview]);
 
   const quickReset = () => {
     setRig(DEFAULT_RIG);
@@ -272,15 +292,15 @@ export function AstronautLogoLab() {
         <span>Astrolab</span>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(34rem,42rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(40rem,46rem)] gap-4 items-stretch">
-        <div className="flex h-full min-h-0 flex-col border border-primary/20 rounded bg-background/40 p-3 md:p-4">
-          <div className="relative flex min-h-[360px] flex-1 border border-primary/15 rounded bg-black/95 p-2 overflow-hidden md:min-h-[420px]">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(34rem,42rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(40rem,46rem)]">
+        <div className="flex min-h-0 flex-col border border-primary/20 rounded bg-background/40 p-3 md:p-4">
+          <div className="relative flex h-[360px] min-h-[360px] border border-primary/15 rounded bg-black/95 p-2 overflow-hidden md:h-[420px] md:min-h-[420px] xl:h-[58vh] xl:max-h-[36rem] 2xl:max-h-[40rem]">
             <canvas
               ref={canvasRef}
               role={accessibilityEnabled ? undefined : "img"}
               aria-hidden={accessibilityEnabled}
               aria-label={accessibilityEnabled ? undefined : "Astronaut logo preview canvas"}
-              className={`w-full h-[360px] md:h-[420px] xl:h-full rounded ${
+              className={`h-full w-full rounded ${
                 accessibilityEnabled ? "opacity-0" : ""
               }`}
             />

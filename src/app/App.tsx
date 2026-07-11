@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Rocket } from "lucide-react";
 
 import { CRTScreen } from "./components/CRTScreen";
 import { RetroNavigation, TabId } from "./components/RetroNavigation";
@@ -65,6 +66,7 @@ export default function App() {
     readSessionBool(SS_EQ_WARNING_DISMISSED, false)
   );
   const [eqWarningOpen, setEqWarningOpen] = useState(false);
+  const [scrollTopVisible, setScrollTopVisible] = useState(false);
 
   const primedRef = useRef(false);
   const terminalButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -127,14 +129,14 @@ export default function App() {
   }, [accessibilityEnabled, soundEnabled]);
 
   useEffect(() => {
-    let activeLink: HTMLAnchorElement | null = null;
+    let activeLink: HTMLElement | null = null;
 
     const findLink = (target: EventTarget | null) => {
       if (!(target instanceof Element)) return null;
-      return target.closest<HTMLAnchorElement>("a[href]");
+      return target.closest<HTMLElement>("a[href], button[data-hover-sfx='link']");
     };
 
-    const startLinkNoise = (link: HTMLAnchorElement | null) => {
+    const startLinkNoise = (link: HTMLElement | null) => {
       if (!soundEnabled || !link || activeLink === link) return;
       activeLink = link;
       startHoverNoise(0.58, 2.15);
@@ -147,7 +149,7 @@ export default function App() {
         });
     };
 
-    const stopLinkNoise = (link: HTMLAnchorElement | null, nextTarget?: EventTarget | null) => {
+    const stopLinkNoise = (link: HTMLElement | null, nextTarget?: EventTarget | null) => {
       if (!link || activeLink !== link) return;
       if (nextTarget instanceof Node && link.contains(nextTarget)) return;
 
@@ -258,9 +260,61 @@ export default function App() {
     onEscape: dismissEqWarning,
   });
 
+  useEffect(() => {
+    const updateScrollTopVisible = () => {
+      setScrollTopVisible(window.scrollY > 520);
+    };
+
+    updateScrollTopVisible();
+    window.addEventListener("scroll", updateScrollTopVisible, { passive: true });
+    window.addEventListener("resize", updateScrollTopVisible);
+
+    return () => {
+      window.removeEventListener("scroll", updateScrollTopVisible);
+      window.removeEventListener("resize", updateScrollTopVisible);
+    };
+  }, []);
+
   const navigateToTab = (tab: TabId) => {
     setActiveTab(tab);
     if (tab !== "systems") setSystemsTargetSlug(null);
+  };
+
+  const scrollPageToTop = () => {
+    const reduceMotion =
+      accessibilityEnabled ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    window.requestAnimationFrame(() => {
+      mainRef.current?.focus({ preventScroll: true });
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    });
+  };
+
+  const openFooterTab = (tab: Extract<TabId, "imprint" | "privacy">) => {
+    stopHoverNoise();
+
+    if (soundEnabled) {
+      primeAudio().catch(() => {});
+      playSound("TERM", 0.2, 1.0, 400);
+    }
+
+    navigateToTab(tab);
+    scrollPageToTop();
+  };
+
+  const handleScrollTop = () => {
+    stopHoverNoise();
+
+    if (soundEnabled) {
+      primeAudio(["TERM"]).then(() => playSound("TERM", 0.12, 1.12, 60)).catch(() => {});
+    }
+
+    scrollPageToTop();
   };
 
   const closeTerminal = () => {
@@ -384,13 +438,8 @@ export default function App() {
           <div className="mt-6 pt-3 border-t border-primary/10 text-xs tracking-widest flex items-center justify-center gap-4">
             <button
               type="button"
-              onClick={() => {
-                if (soundEnabled) {
-                  primeAudio();
-                  playSound("TERM", 0.2, 1.0, 400);
-                }
-                setActiveTab("imprint");
-              }}
+              data-hover-sfx="link"
+              onClick={() => openFooterTab("imprint")}
               className="text-primary/70 hover:text-primary transition-colors"
             >
               [ IMPRINT ]
@@ -400,19 +449,36 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => {
-                if (soundEnabled) {
-                  primeAudio();
-                  playSound("TERM", 0.2, 1.0, 400);
-                }
-                setActiveTab("privacy");
-              }}
+              data-hover-sfx="link"
+              onClick={() => openFooterTab("privacy")}
               className="text-primary/70 hover:text-primary transition-colors"
             >
               [ PRIVACY ]
             </button>
           </div>
         </footer>
+
+        {scrollTopVisible && !terminalOpen && !eqWarningOpen && !accessibilityAutoDetected && (
+          <button
+            type="button"
+            data-hover-sfx="link"
+            onClick={handleScrollTop}
+            aria-label="Scroll to top"
+            title="Scroll to top"
+            className="
+              fixed bottom-4 right-4 z-40
+              inline-flex h-12 w-12 items-center justify-center
+              border-2 border-primary/50 bg-background/85 text-primary
+              backdrop-blur-sm transition-all duration-150
+              hover:border-primary hover:bg-primary hover:text-background
+              focus:outline-none focus:ring-2 focus:ring-primary/50
+              crt-hover-glow crt-inset-idle
+              sm:bottom-6 sm:right-6
+            "
+          >
+            <Rocket className="h-5 w-5" aria-hidden="true" />
+          </button>
+        )}
 
         <TerminalOverlay
           open={terminalOpen}
