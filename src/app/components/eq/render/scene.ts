@@ -83,6 +83,7 @@ export type DrawWalkersDeps = {
   seekVRef: Ref<number>;
   seekHeldRef: Ref<boolean>;
   seekVelNormRef: Ref<number>;
+  gameDuckRef?: Ref<boolean>;
 
   trailRef: Ref<Array<{ x: number; footY: number }>>;
   particlesRef: Ref<Particle[]>;
@@ -494,7 +495,8 @@ export function drawWalkers(
     dir,
     hang,
     pullDir,
-    playing
+    playing,
+    !!deps.gameDuckRef?.current
   );
 
   const parts = deps.particlesRef.current;

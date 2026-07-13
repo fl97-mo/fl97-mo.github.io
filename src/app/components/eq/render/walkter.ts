@@ -28,7 +28,8 @@ export function drawWalker(
   walkDir: number,
   hang: number,
   pullDir: number,
-  playing: boolean
+  playing: boolean,
+  duck = false
 ) {
   const crt = getCrtPalette();
   const dpr = window.devicePixelRatio || 1;
@@ -36,6 +37,7 @@ export function drawWalker(
 
   const m = clamp(motion, 0, 1);
   const idle = 1 - m;
+  const duckN = duck ? 1 : 0;
 
   const bodyY = clamp(bodyYaw, -LOOK_MAX_YAW, LOOK_MAX_YAW);
   const yaw = clamp(lookYaw, -LOOK_MAX_YAW, LOOK_MAX_YAW);
@@ -56,11 +58,13 @@ export function drawWalker(
   const idleSway =
     Math.sin(tNow * 0.85 + x * 0.0025) * (WALK_IDLE_SWAY_PX * dpr) * (0.35 + idle * 0.65);
 
-  const legLen = 22 * s;
-  const bodyH = 26 * s;
-  const headR = 12 * s;
+  const legLen = (22 - duckN * 11.5) * s;
+  const bodyH = (26 - duckN * 12.5) * s;
+  const headR = (12 - duckN * 0.8) * s;
+  const crouchDrop = duckN * 5.5 * dpr;
 
   const bounce = (kickM * 7.0 + bassM * 3.2) * dpr + idleBob;
+  const poseBounce = bounce * (1 - duckN * 0.75);
   const sway = Math.sin(phase * 0.65) * (2.3 * dpr + midsM * 2.4 * dpr) + idleSway;
   const shimmy =
     Math.sin(phase * 1.8 + Math.cos(phase * 0.7)) * (1.2 * dpr + airM * 1.8 * dpr);
@@ -68,10 +72,11 @@ export function drawWalker(
   const hipY =
     footY -
     legLen -
-    bounce * 0.35 +
+    poseBounce * 0.35 +
+    crouchDrop +
     Math.sin(phase * 2.0) * (2.0 * dpr + bassM * 3.2 * dpr);
 
-  const torsoTopY = hipY - bodyH - bounce * 0.25;
+  const torsoTopY = hipY - bodyH - poseBounce * 0.25;
   const tug = pullDir * clamp(hang, 0, 1) * (6.5 * dpr);
 
   const headCX = x + sway * 0.6 + shimmy * 0.25 + tug;
@@ -79,7 +84,7 @@ export function drawWalker(
   const headCY =
     torsoTopY -
     headR * 0.35 -
-    bounce * 0.15 +
+    poseBounce * 0.15 +
     Math.sin(phase * 1.15) * (0.85 * dpr + airM * 1.25 * dpr);
 
   const headCXP = headCX + yaw * headR * 0.12;
@@ -174,16 +179,16 @@ export function drawWalker(
 
   const torsoCX = x + sway * 0.35 + tug * 0.75;
 
-  const shoulderY = lerp(torsoTopY, hipY, 0.42) - bounce * 0.12;
+  const shoulderY = lerp(torsoTopY, hipY, 0.42) - poseBounce * 0.12;
 
   const shoulderCenterX = torsoCX + yaw * headR * 0.1;
   const shoulderSpread = 6.4 * s * (1 - face * 0.55);
   const shL = shoulderCenterX - shoulderSpread;
   const shR = shoulderCenterX + shoulderSpread;
 
-  const armLen = (18 + kickM * 2.5) * s;
+  const armLen = (18 - duckN * 3.5 + kickM * 2.5) * s;
 
-  const baseDown = Math.PI / 2 + pitch * 0.12 - hang * 0.6;
+  const baseDown = Math.PI / 2 + pitch * 0.12 - hang * 0.6 + duckN * 0.18;
 
   const outward = 0.28 + midsM * 0.12;
   const liftAmp = (0.18 + airM * 0.14 + kickM * 0.2) * m;
@@ -349,8 +354,8 @@ export function drawWalker(
     drawLeg(hipR, footXB, footYB, sideR, liftB, legBA);
   }
 
-  const packW = 10 * s;
-  const packH = 16 * s;
+  const packW = (10 - duckN * 1.5) * s;
+  const packH = (16 - duckN * 4) * s;
   const packY = lerp(torsoTopY, hipY, 0.25);
   g.strokeStyle = crt.rgba(alpha * 0.78);
   g.strokeRect(torsoCX - packW * 0.5, packY, packW, packH);

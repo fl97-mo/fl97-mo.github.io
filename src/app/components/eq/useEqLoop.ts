@@ -46,6 +46,7 @@ export type UseEqLoopArgs = {
   seekYRef: Ref<number>;
   seekVRef: Ref<number>;
   seekVelNormRef: Ref<number>;
+  gameDuckRef?: Ref<boolean>;
 
   waveAmpRef: Ref<number>;
   waveAlphaRef: Ref<number>;
@@ -288,6 +289,7 @@ export function useEqLoop(args: UseEqLoopArgs) {
             seekVRef: args.seekVRef,
             seekHeldRef: args.seekHeldRef,
             seekVelNormRef: args.seekVelNormRef,
+            gameDuckRef: args.gameDuckRef,
 
             trailRef: args.trailRef,
             particlesRef: args.particlesRef,

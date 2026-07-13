@@ -8,6 +8,7 @@ import { MIN_HZ, MAX_HZ, VIS_COLUMNS, SEGMENTS, TICKS_HZ } from "./eq/constants"
 import { clamp, formatTime, makeMidEmphasisEdges } from "./eq/math";
 import type { BgPix, Particle, Star, U8 } from "./eq/types";
 import { ensureEqGraph } from "./eq/audioGraph";
+import { EqRunnerGame } from "./eq/EqRunnerGame";
 import { useEqLoop } from "./eq/useEqLoop";
 
 const AUDIO_FILE_RE = /\.(aac|aiff?|flac|m4a|mp3|ogg|opus|wav|webm)$/i;
@@ -89,6 +90,7 @@ export function EqualizerPage() {
   const seekVRef = useRef(0);
   const seekVelNormRef = useRef(0);
   const lastSeekRef = useRef<{ t: number; ts: number } | null>(null);
+  const eqGameDuckRef = useRef(false);
 
   const bassEnvRef = useRef(0);
   const beatFloorRef = useRef(0);
@@ -481,6 +483,7 @@ useEffect(() => {
     seekYRef,
     seekVRef,
     seekVelNormRef,
+    gameDuckRef: eqGameDuckRef,
 
     waveAmpRef,
     waveAlphaRef,
@@ -638,6 +641,16 @@ useEffect(() => {
                   A11Y MODE: ASTRO WALKER VISUAL DISABLED
                 </div>
               )}
+
+              <EqRunnerGame
+                className="absolute inset-3"
+                gameDuckRef={eqGameDuckRef}
+                seekHeldRef={seekHeldRef}
+                seekYRef={seekYRef}
+                seekVelNormRef={seekVelNormRef}
+                timeRef={timeRef}
+                durationRef={durationRef}
+              />
             </div>
 
             <div className="relative border border-primary/15 rounded bg-background/30 p-2">
