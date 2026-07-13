@@ -14,7 +14,12 @@ import {
   stopStatic,
   stopTypingLoop,
 } from "../utils/sfx";
-import { DEFAULT_CRT_COLOR, crtColorToRgb, normalizeCrtColor } from "../utils/crtAccent";
+import {
+  DEFAULT_CRT_COLOR,
+  applyCrtCursorTheme,
+  crtColorToRgb,
+  normalizeCrtColor,
+} from "../utils/crtAccent";
 
 export type EqRepeat = "OFF" | "ONE" | "ALL";
 
@@ -341,7 +346,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.style.setProperty("--crt-accent", crtColor);
     root.style.setProperty("--crt-accent-rgb", crtColorToRgb(crtColor));
-  }, [crtColor]);
+    applyCrtCursorTheme(root, accessibilityEnabled ? "#ffffff" : crtColor);
+  }, [accessibilityEnabled, crtColor]);
 
   const value = useMemo<UIState>(
     () => ({

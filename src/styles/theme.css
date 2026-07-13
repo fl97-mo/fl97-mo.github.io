@@ -76,6 +76,9 @@
   --crt-scrollbar-track-border: rgba(var(--crt-rgb), 0.34);
   --crt-scrollbar-thumb: rgba(var(--crt-rgb), 0.62);
   --crt-scrollbar-thumb-hover: rgba(var(--crt-rgb), 0.9);
+  --crt-cursor-default: auto;
+  --crt-cursor-pointer: pointer;
+  --crt-cursor-text: text;
   --crt-black: #000000;
 }
 
@@ -295,6 +298,12 @@
     font-synthesis: none;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    cursor: var(--crt-cursor-default);
+  }
+
+  body,
+  #root {
+    cursor: var(--crt-cursor-default);
   }
 
   body,
@@ -335,6 +344,41 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+  }
+
+  a[href],
+  button:not(:disabled),
+  summary,
+  label[for],
+  select,
+  input[type="button"],
+  input[type="checkbox"],
+  input[type="color"],
+  input[type="file"],
+  input[type="radio"],
+  input[type="range"],
+  input[type="reset"],
+  input[type="submit"],
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: var(--crt-cursor-pointer);
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: var(--crt-cursor-default);
+  }
+
+  input:not([type]),
+  input[type="email"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="text"],
+  input[type="url"],
+  textarea,
+  [contenteditable="true"] {
+    cursor: var(--crt-cursor-text);
   }
 
   .skip-link {
@@ -393,6 +437,22 @@
 }
 
 @layer utilities {
+  .cursor-default {
+    cursor: var(--crt-cursor-default);
+  }
+
+  .cursor-pointer {
+    cursor: var(--crt-cursor-pointer);
+  }
+
+  .cursor-text {
+    cursor: var(--crt-cursor-text);
+  }
+
+  .disabled\:cursor-default:disabled {
+    cursor: var(--crt-cursor-default);
+  }
+
   .crt-glow-soft {
     box-shadow: 0 0 10px var(--crt-glow-soft);
   }
@@ -592,7 +652,7 @@
       inset 0 -1px 0 rgba(0, 0, 0, 0.65);
     outline: none;
     overflow: hidden;
-    cursor: pointer;
+    cursor: var(--crt-cursor-pointer);
   }
 
   .crt-range--seek {

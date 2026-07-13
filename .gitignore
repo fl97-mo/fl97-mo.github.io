@@ -12,3 +12,13 @@ yarn-error.log*
 .vscode/
 
 dist
+
+# Local-only SY97 desktop capture app and generated video masters.
+electron/
+.sy97-desktop/
+*_4k60_*.mp4
+*_4k60_*.mov
+*_4k60_*.webm
+sy97_equalizer*.mp4
+sy97_equalizer*.mov
+sy97_equalizer*.webm

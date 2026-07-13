@@ -34,7 +34,7 @@ const LOCAL_STYLES = `
     background: rgba(var(--crt-rgb),0.92);
     border:2px solid rgba(var(--crt-rgb),0.65);
     box-shadow: 0 0 12px rgba(var(--crt-rgb),0.35);
-    cursor:pointer;
+    cursor:var(--crt-cursor-pointer);
   }
   .neoRange::-moz-range-thumb{
     width:18px;
@@ -43,7 +43,7 @@ const LOCAL_STYLES = `
     background: rgba(var(--crt-rgb),0.92);
     border:2px solid rgba(var(--crt-rgb),0.65);
     box-shadow: 0 0 12px rgba(var(--crt-rgb),0.35);
-    cursor:pointer;
+    cursor:var(--crt-cursor-pointer);
   }
   .neoRange::-moz-range-track{
     height:12px;
