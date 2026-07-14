@@ -98,18 +98,25 @@ This information is read and shown locally in your browser only. It is not uploa
 to me, GitHub, Cloudflare, or a separate analytics/tracking service by these terminal
 commands. The commands do not create visitor profiles.
 
-4d) Local browser storage / session storage
--------------------------------------------
+4d) Local browser storage / session and local storage
+-----------------------------------------------------
 This website stores some UI preferences locally in your browser session storage,
 for example sound/effects settings, accessibility mode, selected CRT color,
-intro/reveal state, local EQ status, and whether the EQ visual warning was dismissed.
+intro/reveal state, local EQ status, repeat mode, and whether the EQ visual warning
+was dismissed.
 
-These values are used only to make the website behave consistently during your
-current browser session. They are not uploaded to me, GitHub, Cloudflare, or a
-separate analytics/tracking service by this website.
+These session values are used only to make the website behave consistently during
+your current browser session. They are not uploaded to me, GitHub, Cloudflare, or
+a separate analytics/tracking service by this website.
 
-You can clear this data by clearing your browser site data or closing the session,
-depending on your browser settings.
+The EQ runner mini game stores your best score locally in your browser local storage
+under the key "eq-runner-best". This value stays on your device across browser
+sessions until you clear your browser site data or the value is overwritten by a
+new best score. It is not uploaded to me, GitHub, Cloudflare, or a separate
+analytics/tracking service by this website.
+
+You can clear this data by clearing your browser site data. Session storage may also
+be cleared by closing the browser session, depending on your browser settings.
 
 
 5) International data transfers (third countries)
@@ -166,7 +173,7 @@ I may update this privacy policy if the website changes or if legal requirements
 
 Last update
 -----------
-2026-07-07
+2026-07-14
 `}
       </pre>
     </section>
