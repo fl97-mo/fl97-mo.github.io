@@ -93,6 +93,17 @@ export default function App() {
   const chromeHasRevealedRef = useRef(homeRevealComplete);
   const [navigationVisible, setNavigationVisible] = useState(homeRevealComplete);
   const [footerVisible, setFooterVisible] = useState(homeRevealComplete);
+  const [skipChromeAnimation, setSkipChromeAnimation] = useState(false);
+
+  const completeHomeBootImmediately = useCallback(() => {
+    if (!introDone) markIntroDone();
+    if (!homeRevealDone) markHomeRevealDone();
+
+    chromeHasRevealedRef.current = true;
+    setSkipChromeAnimation(true);
+    setNavigationVisible(true);
+    setFooterVisible(true);
+  }, [homeRevealDone, introDone, markHomeRevealDone, markIntroDone]);
 
   const dismissEqWarning = useCallback(() => {
     setEqWarningOpen(false);
@@ -218,6 +229,7 @@ export default function App() {
 
     if (!homeRevealDone) {
       chromeHasRevealedRef.current = false;
+      setSkipChromeAnimation(false);
       setNavigationVisible(false);
       setFooterVisible(false);
       return;
@@ -239,6 +251,38 @@ export default function App() {
 
     return () => window.clearTimeout(footerTimer);
   }, [accessibilityEnabled, effectsEnabled, homeRevealDone]);
+
+  useEffect(() => {
+    if (activeTab !== "home" || (introComplete && homeRevealComplete)) return;
+
+    const skipOnWheel = (event: WheelEvent) => {
+      if (event.deltaY !== 0) completeHomeBootImmediately();
+    };
+    const skipOnScroll = () => completeHomeBootImmediately();
+    const skipOnTouchMove = () => completeHomeBootImmediately();
+    const skipOnScrollKey = (event: KeyboardEvent) => {
+      if (["ArrowDown", "PageDown", "End", " "].includes(event.key)) {
+        completeHomeBootImmediately();
+      }
+    };
+
+    window.addEventListener("wheel", skipOnWheel, { passive: true });
+    window.addEventListener("scroll", skipOnScroll, { passive: true });
+    window.addEventListener("touchmove", skipOnTouchMove, { passive: true });
+    window.addEventListener("keydown", skipOnScrollKey);
+
+    return () => {
+      window.removeEventListener("wheel", skipOnWheel);
+      window.removeEventListener("scroll", skipOnScroll);
+      window.removeEventListener("touchmove", skipOnTouchMove);
+      window.removeEventListener("keydown", skipOnScrollKey);
+    };
+  }, [
+    activeTab,
+    completeHomeBootImmediately,
+    homeRevealComplete,
+    introComplete,
+  ]);
 
   useEffect(() => {
     const shouldShowEqWarning =
@@ -276,6 +320,10 @@ export default function App() {
   }, []);
 
   const navigateToTab = (tab: TabId) => {
+    if (activeTab === "home" && tab !== "home" && !homeRevealComplete) {
+      completeHomeBootImmediately();
+    }
+
     setActiveTab(tab);
     if (tab !== "systems") setSystemsTargetSlug(null);
   };
@@ -336,7 +384,7 @@ export default function App() {
     chromeHasRevealedRef.current = true;
     setFooterVisible(true);
   }, []);
-  const chromeInstant = !effectsEnabled || accessibilityEnabled;
+  const chromeInstant = !effectsEnabled || accessibilityEnabled || skipChromeAnimation;
   const showNavigation = navigationVisible || chromeInstant;
   const showFooter = footerVisible || chromeInstant;
 
@@ -398,7 +446,7 @@ export default function App() {
                   onNavigate={navigateToTab}
                   onOpenSystems={(slug) => {
                     setSystemsTargetSlug(slug);
-                    setActiveTab("systems");
+                    navigateToTab("systems");
                   }}
                 />
               )}
@@ -413,7 +461,7 @@ export default function App() {
           )}
 
           {activeTab === "coding" && <CodingPage />}
-          {activeTab === "music" && <MusicPage onOpenEQ={() => setActiveTab("eq")} />}
+          {activeTab === "music" && <MusicPage onOpenEQ={() => navigateToTab("eq")} />}
           {activeTab === "eq" && <EqualizerPage />}
 
           {activeTab === "astronaut" && <AstronautLogoLab />}
@@ -425,7 +473,7 @@ export default function App() {
         <footer
           aria-hidden={!showFooter}
           className={`mt-12 pt-6 border-t border-primary/30 text-center text-muted-foreground ${
-            showFooter ? "home-chrome-reveal" : "invisible"
+            showFooter ? (chromeInstant ? "" : "home-chrome-reveal") : "invisible"
           }`}
         >
           <p className="flex items-center justify-center gap-2">
