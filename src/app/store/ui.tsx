@@ -17,6 +17,7 @@ import {
 import {
   DEFAULT_CRT_COLOR,
   applyCrtCursorTheme,
+  applyCrtFaviconTheme,
   crtColorToRgb,
   normalizeCrtColor,
 } from "../utils/crtAccent";
@@ -347,6 +348,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
     root.style.setProperty("--crt-accent", crtColor);
     root.style.setProperty("--crt-accent-rgb", crtColorToRgb(crtColor));
     applyCrtCursorTheme(root, accessibilityEnabled ? "#ffffff" : crtColor);
+    applyCrtFaviconTheme(document, crtColor);
   }, [accessibilityEnabled, crtColor]);
 
   const value = useMemo<UIState>(

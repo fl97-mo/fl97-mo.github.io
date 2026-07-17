@@ -90,3 +90,27 @@ export function applyCrtCursorTheme(root: HTMLElement, value: string) {
   root.style.setProperty("--crt-cursor-pointer", cursors.pointer);
   root.style.setProperty("--crt-cursor-text", cursors.text);
 }
+
+export function getCrtFaviconDataUrl(value: string) {
+  const accent = normalizeCrtColor(value);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#0a0a0a"/><circle cx="32" cy="32" r="28" fill="none" stroke="${accent}" stroke-width="0.5" opacity="0.3"/><circle cx="32" cy="32" r="28" fill="none" stroke="${accent}" stroke-width="1.5"/><text x="32" y="40" font-family="monospace" font-size="28" font-weight="bold" fill="${accent}" text-anchor="middle">&gt;_</text></svg>`;
+
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+export function applyCrtFaviconTheme(doc: Document, value: string) {
+  const dataUrl = getCrtFaviconDataUrl(value);
+  const existingIcons = Array.from(
+    doc.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]')
+  );
+  const icons = existingIcons.length
+    ? existingIcons
+    : [doc.head.appendChild(doc.createElement("link"))];
+
+  for (const icon of icons) {
+    icon.rel = "icon";
+    icon.type = "image/svg+xml";
+    icon.removeAttribute("sizes");
+    icon.href = dataUrl;
+  }
+}
