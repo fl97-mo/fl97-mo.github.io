@@ -99,6 +99,7 @@ export const STAR_PARALLAX_BASE_SPEED_PX = 1.4;
 export const STAR_PARALLAX_MOTION_GAIN_PX = 4.0;
 export const STAR_PARALLAX_DEPTH_MIN = 0.22;
 export const STAR_PARALLAX_DEPTH_MAX = 0.42;
+export const STAR_IDLE_VISIBILITY = 0.62;
 
 export const SCENE_VIS_ATTACK = 0.1;
 export const SCENE_VIS_RELEASE = 0.035;

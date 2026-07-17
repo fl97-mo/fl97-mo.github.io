@@ -16,6 +16,7 @@ import {
   SCENE_VIS_RELEASE,
   STAR_PARALLAX_BASE_SPEED_PX,
   STAR_PARALLAX_MOTION_GAIN_PX,
+  STAR_IDLE_VISIBILITY,
   WALK_BASE_SPEED,
   WALK_IDLE_SPEED,
   WALK_MOTION_ATTACK,
@@ -245,7 +246,7 @@ export function drawWalkers(
     kick,
     beat,
     beatImpulse,
-    sceneVis,
+    Math.max(STAR_IDLE_VISIBILITY, sceneVis),
     beatCount,
     deps.starScrollRef.current,
     deps
@@ -337,13 +338,11 @@ export function drawWalkers(
   deps.phaseRef.current += dt * lerp(WALK_IDLE_SPEED, speedTarget, motion);
   const phase = deps.phaseRef.current;
 
-  if (playing || motion > 0.01) {
-    const parallaxSpeed =
-      (STAR_PARALLAX_BASE_SPEED_PX + STAR_PARALLAX_MOTION_GAIN_PX * motion + kick * 1.6) * dpr;
-    deps.starScrollRef.current += dt * parallaxSpeed * dir;
-    if (Math.abs(deps.starScrollRef.current) > w * 100) {
-      deps.starScrollRef.current = deps.starScrollRef.current % Math.max(1, w);
-    }
+  const parallaxSpeed =
+    (STAR_PARALLAX_BASE_SPEED_PX + STAR_PARALLAX_MOTION_GAIN_PX * motion + kick * 1.6) * dpr;
+  deps.starScrollRef.current += dt * parallaxSpeed * dir;
+  if (Math.abs(deps.starScrollRef.current) > w * 100) {
+    deps.starScrollRef.current = deps.starScrollRef.current % Math.max(1, w);
   }
 
   // =========================
