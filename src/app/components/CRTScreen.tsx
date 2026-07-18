@@ -8,32 +8,14 @@ interface CRTScreenProps {
 export function CRTScreen({ children }: CRTScreenProps) {
   const { accessibilityEnabled, effectsEnabled } = useUI();
   const showCrtEffects = effectsEnabled && !accessibilityEnabled;
-  const crtOverlayBase =
-    "pointer-events-none fixed inset-x-0 -top-[20vh] -bottom-[20vh] transform-gpu";
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">
       {showCrtEffects && (
-        <>
-          <div className={`${crtOverlayBase} z-50 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15)_1px,transparent_1px,transparent_2px)]`} />
-          <div
-            className={`${crtOverlayBase} z-40`}
-            style={{ boxShadow: "inset 0 0 100px var(--crt-screen-glow)" }}
-          />
-          <div className={`${crtOverlayBase} z-30 bg-primary/3 animate-[flicker_1.8s_infinite]`} />
-
-          <style>{`
-            @keyframes flicker {
-              0%   { opacity: 0.90; }
-              15%  { opacity: 0.96; }
-              30%  { opacity: 0.88; }
-              45%  { opacity: 0.97; }
-              60%  { opacity: 0.89; }
-              75%  { opacity: 0.95; }
-              100% { opacity: 0.91; }
-            }
-          `}</style>
-        </>
+        <div className="crt-effects" aria-hidden="true">
+          <div className="crt-effects__phosphor" />
+          <div className="crt-effects__glass" />
+        </div>
       )}
 
       <div className="relative z-10 min-h-screen p-3 sm:p-4 md:p-5 xl:p-6">

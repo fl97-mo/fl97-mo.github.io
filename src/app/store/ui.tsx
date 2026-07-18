@@ -344,6 +344,11 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof document === "undefined") return;
+    document.documentElement.dataset.effects = effectsEnabled ? "on" : "off";
+  }, [effectsEnabled]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
     const root = document.documentElement;
     root.style.setProperty("--crt-accent", crtColor);
     root.style.setProperty("--crt-accent-rgb", crtColorToRgb(crtColor));
